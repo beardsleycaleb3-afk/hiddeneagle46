@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>HIDDENEAGLE46 • CASCADE ALGEBRA LIVE</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background: #0a0a0a;
+            color: #0f0;
+            font-family: monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            text-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Scanlines */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: repeating-linear-gradient(
+                0deg,
+                rgba(0, 255, 0, 0.05) 0px,
+                rgba(0, 255, 0, 0.05) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        .header {
+            border-bottom: 2px solid #0f0;
+            padding: 12px;
+            background: #0a0a0a;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .container {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 8px;
+            position: relative;
+            z-index: 1;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .container::-webkit-scrollbar {
+            display: none;
+        }
+
+        .mode-tabs {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 12px;
+            flex-wrap: nowrap;
+        }
+
+        .mode-btn {
+            flex: 1;
+            min-height: 48px;
+            background: transparent;
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            border-radius: 0;
+            font-family: monospace;
+            text-shadow: 0 0 4px rgba(0, 255, 0, 0.8);
+        }
+
+        .mode-btn.active {
+            background: #0f0;
+            color: #000;
+            text-shadow: none;
+        }
+
+        .mode-btn:active {
+            opacity: 0.8;
+        }
+
+        .section {
+            border: 1px solid #0f0;
+            padding: 12px;
+            margin-bottom: 12px;
+            background: rgba(0, 255, 0, 0.02);
+        }
+
+        .label {
+            font-size: 11px;
+            margin-bottom: 8px;
+            opacity: 0.7;
+            text-transform: uppercase;
+        }
+
+        .input-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .input-field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .input-label {
+            font-size: 10px;
+            opacity: 0.6;
+        }
+
+        input[type="number"] {
+            background: #0a0a0a;
+            color: #0f0;
+            border: 1px solid #0f0;
+            padding: 8px;
+            font-family: monospace;
+            font-size: 12px;
+            width: 100%;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            box-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
+        }
+
+        .button-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 6px;
+            margin-bottom: 12px;
+        }
+
+        .btn {
+            min-height: 44px;
+            background: #0f0;
+            color: #000;
+            border: none;
+            padding: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 0;
+            font-family: monospace;
+            text-transform: uppercase;
+        }
+
+        .btn:active {
+            opacity: 0.8;
+        }
+
+        .result-box {
+            background: rgba(0, 255, 0, 0.1);
+            border: 1px solid #0f0;
+            padding: 10px;
+            margin: 8px 0;
+            font-size: 11px;
+            line-height: 1.6;
+        }
+
+        .result-value {
+            color: #0f0;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .parity-pass {
+            color: #0f0;
+        }
+
+        .parity-fail {
+            color: #f0f;
+        }
+
+        .mode-section {
+            display: none;
+        }
+
+        .mode-section.active {
+            display: block;
+        }
+
+        .collision-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .collision-tile {
+            background: transparent;
+            border: 1px solid #0f0;
+            padding: 12px;
+            text-align: center;
+            font-size: 10px;
+            cursor: pointer;
+            min-height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+        }
+
+        .collision-tile:active {
+            background: rgba(0, 255, 0, 0.2);
+        }
+
+        .tile-name {
+            font-size: 9px;
+            opacity: 0.6;
+        }
+
+        .tile-value {
+            font-size: 14px;
+            font-weight: bold;
+            color: #0f0;
+        }
+
+        .footer {
+            font-size: 9px;
+            opacity: 0.5;
+            text-align: center;
+            padding: 8px;
+            border-top: 1px solid rgba(0, 255, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">▄█▀█ HIDDENEAGLE46 ░ CASCADE ALGEBRA</div>
+
+    <div class="container">
+        <!-- MODE TABS -->
+        <div class="mode-tabs">
+            <button class="mode-btn active" data-mode="cascade">⊗ CASCADE</button>
+            <button class="mode-btn" data-mode="collision">💥 COLLISION</button>
+            <button class="mode-btn" data-mode="validator">✓ VALIDATOR</button>
+        </div>
+
+        <!-- CASCADE MODE -->
+        <div class="mode-section active" id="cascade">
+            <div class="section">
+                <div class="label">Enter operands:</div>
+                <div class="input-row">
+                    <div class="input-field">
+                        <span class="input-label">A</span>
+                        <input type="number" id="opA" value="4" min="0" max="255">
+                    </div>
+                    <div class="input-field">
+                        <span class="input-label">B</span>
+                        <input type="number" id="opB" value="4" min="0" max="255">
+                    </div>
+                    <div class="input-field">
+                        <span class="input-label">C</span>
+                        <input type="number" id="opC" value="4" min="0" max="255">
+                    </div>
+                </div>
+                <div class="button-group">
+                    <button class="btn" id="computeBtn">COMPUTE</button>
+                    <button class="btn" id="clearBtn">CLEAR</button>
+                </div>
+            </div>
+
+            <div class="result-box" id="cascadeResult"></div>
+
+            <div class="section">
+                <div class="label">Preset Examples:</div>
+                <div class="button-group">
+                    <button class="btn" style="font-size: 11px;" id="preset2x2x2">2⊗2⊗2=18</button>
+                    <button class="btn" style="font-size: 11px;" id="preset4x4x4">4⊗4⊗4=100</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLLISION MODE -->
+        <div class="mode-section" id="collision">
+            <div class="section">
+                <div class="label">Select player & tile:</div>
+
+                <div style="margin-bottom: 12px;">
+                    <div class="label" style="margin-bottom: 6px;">PLAYER STATE:</div>
+                    <div class="input-row" style="grid-template-columns: 1fr;">
+                        <input type="number" id="playerState" value="50" min="0" max="255" style="grid-column: 1;">
+                    </div>
+                </div>
+
+                <div class="label">TILE OPTIONS:</div>
+                <div class="collision-grid">
+                    <div class="collision-tile" data-tile="10">
+                        <div class="tile-value">💎</div>
+                        <div class="tile-name">GEM (10)</div>
+                    </div>
+                    <div class="collision-tile" data-tile="5">
+                        <div class="tile-value">⚔️</div>
+                        <div class="tile-name">SWORD (5)</div>
+                    </div>
+                    <div class="collision-tile" data-tile="0">
+                        <div class="tile-value">🚪</div>
+                        <div class="tile-name">INERT (0)</div>
+                    </div>
+                    <div class="collision-tile" data-tile="20">
+                        <div class="tile-value">🧪</div>
+                        <div class="tile-name">POTION (20)</div>
+                    </div>
+                    <div class="collision-tile" data-tile="3">
+                        <div class="tile-value">💰</div>
+                        <div class="tile-name">COIN (3)</div>
+                    </div>
+                    <div class="collision-tile" data-tile="100">
+                        <div class="tile-value">👑</div>
+                        <div class="tile-name">CROWN (100)</div>
+                    </div>
+                </div>
+
+                <button class="btn" id="collideBtn" style="width: 100%;">COLLIDE</button>
+            </div>
+
+            <div class="result-box" id="collisionResult"></div>
+        </div>
+
+        <!-- VALIDATOR MODE -->
+        <div class="mode-section" id="validator">
+            <div class="section">
+                <div class="label">Validate number:</div>
+                <div class="input-row" style="grid-template-columns: 1fr;">
+                    <input type="number" id="validateNum" value="100" min="0" max="255">
+                </div>
+                <button class="btn" style="width: 100%;" id="validateBtn">ANALYZE</button>
+            </div>
+
+            <div class="result-box" id="validatorResult"></div>
+
+            <div class="section">
+                <div class="label">Quick Reference:</div>
+                <div style="font-size: 10px; opacity: 0.7; line-height: 1.8;">
+                    <div>✓ = Even Parity (Stable)</div>
+                    <div>✗ = Odd Parity (Fold to stable)</div>
+                    <div>Q = Quaterbase4i (pdpq...)</div>
+                    <div>p=00, d=01, b=10, q=11</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer">HIDDENEAGLE46 • CUSTOM CASCADE ALGEBRA • ANDROID CHROME</div>
+    </div>
+
+    <script>
+        // Inline CascadeAlgebra (from CascadeAlgebra.js)
+        class CascadeAlgebra {
+            static cascade(...operands) {
+                if (operands.length === 0) return 0;
+                if (operands.length === 1) return operands[0];
+                let accumulator = operands[0];
+                for (let i = 1; i < operands.length; i++) {
+                    const operand = operands[i];
+                    if (operand === 0) continue;
+                    if (accumulator === 0 && i > 1) return 0;
+                    accumulator = accumulator + (accumulator * operand);
+                }
+                return accumulator;
+            }
+
+            static parityBits(n) {
+                let count = 0;
+                let val = Math.abs(n) >>> 0;
+                while (val) {
+                    count += val & 1;
+                    val >>>= 1;
+                }
+                return count;
+            }
+
+            static isEvenParity(n) {
+                return CascadeAlgebra.parityBits(n) % 2 === 0;
+            }
+
+            static fold(n) {
+                if (n < 0) return CascadeAlgebra.fold(-n);
+                if (CascadeAlgebra.isEvenParity(n)) return n;
+                const complement = (~n) & 0xFF;
+                const fold1 = n ^ complement;
+                const fold2 = n ^ (n & 0x0F);
+                const fold3 = (n + complement) & 0xFF;
+                const candidates = [fold1, fold2, fold3];
+                for (const c of candidates) {
+                    if (CascadeAlgebra.isEvenParity(c)) return c;
+                }
+                const rotated = ((n << 1) | (n >> 7)) & 0xFF;
+                return CascadeAlgebra.isEvenParity(rotated) ? rotated : rotated ^ 1;
+            }
+
+            static toQuaterbase4i(n) {
+                const binary = (n & 0xFF).toString(2).padStart(8, '0');
+                const pairs = [
+                    binary.substring(0, 2),
+                    binary.substring(2, 4),
+                    binary.substring(4, 6),
+                    binary.substring(6, 8),
+                ];
+                const map = { '00': 'p', '01': 'd', '10': 'b', '11': 'q' };
+                return pairs.map(pair => map[pair]).join('');
+            }
+
+            static validate(...operands) {
+                const raw = CascadeAlgebra.cascade(...operands);
+                const stable = CascadeAlgebra.fold(raw);
+                return {
+                    raw,
+                    stable,
+                    parity: CascadeAlgebra.isEvenParity(stable) ? 'even' : 'odd',
+                    binary: (stable & 0xFF).toString(2).padStart(8, '0'),
+                    quaterbase4i: CascadeAlgebra.toQuaterbase4i(stable),
+                    valid: CascadeAlgebra.isEvenParity(stable),
+                };
+            }
+
+            static collide(playerState, tileState) {
+                const result = CascadeAlgebra.cascade(playerState, tileState);
+                const stable = CascadeAlgebra.fold(result);
+                return stable;
+            }
+
+            static describe(n) {
+                const quater = CascadeAlgebra.toQuaterbase4i(n);
+                const parity = CascadeAlgebra.isEvenParity(n) ? '✓ EVEN' : '✗ ODD';
+                return `[${n}] ${parity} | QBase4i: ${quater} | Binary: ${(n & 0xFF).toString(2).padStart(8, '0')}`;
+            }
+        }
+
+        // Mode switching
+        document.querySelectorAll('[data-mode]').forEach(btn => {
+            btn.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                const mode = btn.dataset.mode;
+                document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                document.querySelectorAll('.mode-section').forEach(s => s.classList.remove('active'));
+                document.getElementById(mode).classList.add('active');
+            });
+        });
+
+        // CASCADE MODE
+        document.getElementById('computeBtn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const a = parseInt(document.getElementById('opA').value) || 0;
+            const b = parseInt(document.getElementById('opB').value) || 0;
+            const c = parseInt(document.getElementById('opC').value) || 0;
+            const result = CascadeAlgebra.validate(a, b, c);
+            const parityClass = result.valid ? 'parity-pass' : 'parity-fail';
+            const parityLabel = result.valid ? '✓ PASS' : '✗ FOLD';
+            document.getElementById('cascadeResult').innerHTML = `
+                <div style="margin-bottom: 8px;">
+                    <strong>${a} ⊗ ${b} ⊗ ${c}</strong>
+                </div>
+                <div>Raw Result: <span class="result-value">${result.raw}</span></div>
+                <div>Stable Result: <span class="result-value">${result.stable}</span></div>
+                <div>Parity: <span class="${parityClass}">${parityLabel}</span></div>
+                <div style="margin-top: 8px; font-size: 10px; opacity: 0.7;">
+                    Binary: ${result.binary}<br>
+                    QBase4i: ${result.quaterbase4i}
+                </div>
+            `;
+        });
+
+        document.getElementById('clearBtn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            document.getElementById('opA').value = '4';
+            document.getElementById('opB').value = '4';
+            document.getElementById('opC').value = '4';
+            document.getElementById('cascadeResult').innerHTML = '';
+        });
+
+        document.getElementById('preset2x2x2').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            document.getElementById('opA').value = '2';
+            document.getElementById('opB').value = '2';
+            document.getElementById('opC').value = '2';
+            const result = CascadeAlgebra.validate(2, 2, 2);
+            document.getElementById('cascadeResult').innerHTML = `
+                <div style="margin-bottom: 8px;"><strong>2 ⊗ 2 ⊗ 2</strong></div>
+                <div>Raw: <span class="result-value">${result.raw}</span></div>
+                <div>Stable: <span class="result-value">${result.stable}</span></div>
+                <div>Parity: <span class="parity-pass">✓ PASS</span></div>
+                <div style="margin-top: 8px; font-size: 10px; opacity: 0.7;">Binary: ${result.binary}<br>QBase4i: ${result.quaterbase4i}</div>
+            `;
+        });
+
+        document.getElementById('preset4x4x4').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            document.getElementById('opA').value = '4';
+            document.getElementById('opB').value = '4';
+            document.getElementById('opC').value = '4';
+            const result = CascadeAlgebra.validate(4, 4, 4);
+            document.getElementById('cascadeResult').innerHTML = `
+                <div style="margin-bottom: 8px;"><strong>4 ⊗ 4 ⊗ 4</strong></div>
+                <div>Raw: <span class="result-value">${result.raw}</span></div>
+                <div>Stable: <span class="result-value">${result.stable}</span></div>
+                <div>Parity: <span class="parity-fail">✗ ODD → FOLD</span></div>
+                <div style="margin-top: 8px; font-size: 10px; opacity: 0.7;">Binary: ${result.binary}<br>QBase4i: ${result.quaterbase4i}</div>
+            `;
+        });
+
+        // COLLISION MODE
+        let selectedTile = null;
+        document.querySelectorAll('.collision-tile').forEach(tile => {
+            tile.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                document.querySelectorAll('.collision-tile').forEach(t => t.style.background = 'transparent');
+                selectedTile = parseInt(tile.dataset.tile);
+                tile.style.background = 'rgba(0, 255, 0, 0.3)';
+            });
+        });
+
+        document.getElementById('collideBtn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (selectedTile === null) {
+                document.getElementById('collisionResult').innerHTML = '<div style="color: #f0f;">SELECT A TILE FIRST</div>';
+                return;
+            }
+            const playerState = parseInt(document.getElementById('playerState').value) || 0;
+            const newState = CascadeAlgebra.collide(playerState, selectedTile);
+            document.getElementById('collisionResult').innerHTML = `
+                <div style="margin-bottom: 8px;"><strong>Player (${playerState}) ⊗ Tile (${selectedTile})</strong></div>
+                <div>New State: <span class="result-value">${newState}</span></div>
+                <div style="margin-top: 8px; font-size: 10px; opacity: 0.7;">
+                    ${CascadeAlgebra.describe(newState)}
+                </div>
+            `;
+        });
+
+        // VALIDATOR MODE
+        document.getElementById('validateBtn').addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            const num = parseInt(document.getElementById('validateNum').value) || 0;
+            const parity = CascadeAlgebra.isEvenParity(num);
+            const stable = parity ? num : CascadeAlgebra.fold(num);
+            const parityClass = parity ? 'parity-pass' : 'parity-fail';
+            const parityLabel = parity ? '✓ STABLE' : '✗ FOLDED';
+            document.getElementById('validatorResult').innerHTML = `
+                <div><strong>Input: ${num}</strong></div>
+                <div>Status: <span class="${parityClass}">${parityLabel}</span></div>
+                <div>Stable Value: <span class="result-value">${stable}</span></div>
+                <div style="margin-top: 8px; font-size: 10px; opacity: 0.7;">
+                    ${CascadeAlgebra.describe(stable)}
+                </div>
+            `;
+        });
+    </script>
+</body>
+</html>
