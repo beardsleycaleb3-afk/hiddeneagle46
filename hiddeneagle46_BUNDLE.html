@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#0a0a0a">
+    <meta name="apple-mobile-web-app-capable" content="no">
+    <link rel="manifest" href="data:application/json,{%22name%22:%22Sultan-47%22,%22short_name%22:%22Sultan47%22,%22start_url%22:%22./index.html%22,%22display%22:%22fullscreen%22,%22background_color%22:%22%230a0a0a%22,%22theme_color%22:%22%230f0%22}">
+    <title>HIDDENEAGLE46 • SULTAN-47 GAME PLATFORM</title>
+    <style>
+        :root {
+            --neon: #0f0;
+            --bg: #0a0a0a;
+            --glass: rgba(0, 20, 0, 0.9);
+            --scanline: rgba(0, 255, 0, 0.05);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            tap-highlight-color: transparent;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100vh;
+            overflow: hidden;
+            background: var(--bg);
+            color: var(--neon);
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            line-height: 1.4;
+            text-shadow: 0 0 8px rgba(0, 255, 0, 0.5);
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: repeating-linear-gradient(
+                0deg,
+                var(--scanline) 0px,
+                var(--scanline) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 999;
+        }
+
+        #gameCanvas {
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            touch-action: none;
+            cursor: none;
+        }
+
+        .ui-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            display: flex;
+            flex-direction: column;
+            z-index: 10;
+        }
+
+        .hud-top {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            padding: 8px 10px;
+            background: linear-gradient(to bottom, var(--glass), transparent);
+            font-size: 10px;
+            border-bottom: 1px solid var(--neon);
+            pointer-events: auto;
+        }
+
+        .hud-stat {
+            line-height: 1.2;
+        }
+
+        .hud-stat:last-child {
+            text-align: right;
+        }
+
+        .controls-bar {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            align-items: center;
+            padding: 12px 10px;
+            background: linear-gradient(to top, var(--glass), transparent);
+            flex-wrap: wrap;
+            pointer-events: auto;
+            margin-top: auto;
+            border-top: 1px solid var(--neon);
+        }
+
+        .btn {
+            min-height: 48px;
+            min-width: 68px;
+            background: var(--neon);
+            color: var(--bg);
+            border: 1px solid var(--neon);
+            padding: 8px 12px;
+            font-family: inherit;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            text-transform: uppercase;
+            border-radius: 0;
+            transition: all 0.05s;
+        }
+
+        .btn:active {
+            opacity: 0.8;
+            transform: scale(0.92);
+        }
+
+        .btn.secondary {
+            background: transparent;
+            color: var(--neon);
+        }
+
+        .btn.secondary:active {
+            background: var(--neon);
+            color: var(--bg);
+        }
+
+        .dpad {
+            display: grid;
+            grid-template-columns: repeat(3, 52px);
+            gap: 8px;
+        }
+
+        .dpad-btn {
+            width: 52px;
+            height: 52px;
+            background: var(--neon);
+            color: var(--bg);
+            border: none;
+            font-weight: bold;
+            font-size: 18px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dpad-btn:active {
+            opacity: 0.8;
+        }
+
+        .dpad-center {
+            background: transparent;
+            color: var(--neon);
+            border: 1px solid var(--neon);
+        }
+
+        .mode-tabs {
+            display: flex;
+            gap: 6px;
+            justify-content: center;
+            margin-bottom: 12px;
+            pointer-events: auto;
+        }
+
+        .mode-tab {
+            flex: 1;
+            max-width: 120px;
+            min-height: 44px;
+            background: transparent;
+            color: var(--neon);
+            border: 1px solid var(--neon);
+            padding: 8px;
+            font-family: inherit;
+            font-weight: bold;
+            font-size: 11px;
+            cursor: pointer;
+            text-transform: uppercase;
+        }
+
+        .mode-tab.active {
+            background: var(--neon);
+            color: var(--bg);
+        }
+
+        .modal {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--bg);
+            border: 2px solid var(--neon);
+            padding: 20px;
+            color: var(--neon);
+            font-family: inherit;
+            z-index: 1000;
+            min-width: 280px;
+            max-width: 90%;
+            pointer-events: auto;
+        }
+
+        .modal-title {
+            font-weight: bold;
+            font-size: 14px;
+            margin-bottom: 10px;
+            text-transform: uppercase;
+        }
+
+        .modal-content {
+            font-size: 11px;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .modal-buttons .btn {
+            flex: 1;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="ui-overlay">
+        <div class="hud-top">
+            <div class="hud-stat">
+                MODE: <span id="modeDisplay">EDITOR</span><br>
+                XP: <span id="playerXP">0</span>
+            </div>
+            <div style="text-align: center; font-weight: bold;">▄█▀█ SULTAN-47</div>
+            <div class="hud-stat" style="text-align: right;">
+                FPS: <span id="fpsDisplay">60</span><br>
+                LEVEL: <span id="levelDisplay">1</span>
+            </div>
+        </div>
+
+        <div style="flex: 1; padding: 12px; overflow-y: auto; pointer-events: auto; -webkit-overflow-scrolling: touch;">
+            <div id="editorUI" style="display: none;">
+                <div class="mode-tabs" style="margin-bottom: 12px;">
+                    <button class="mode-tab active" data-mode="build">✏️ BUILD</button>
+                    <button class="mode-tab" data-mode="play">▶️ PLAY</button>
+                </div>
+
+                <div style="border: 1px solid var(--neon); padding: 10px; margin-bottom: 12px; font-size: 10px;">
+                    <div style="opacity: 0.7; margin-bottom: 6px;">LEVEL THEMES:</div>
+                    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px;" id="levelThemesContainer"></div>
+                </div>
+
+                <div style="border: 1px solid var(--neon); padding: 10px; margin-bottom: 12px; font-size: 10px;">
+                    <div style="opacity: 0.7; margin-bottom: 6px;">TILE PALETTE:</div>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px;" id="tileWallsContainer"></div>
+                </div>
+
+                <div style="display: flex; gap: 6px; margin-bottom: 12px;">
+                    <button class="btn" id="saveBtn" style="flex: 1;">💾 SAVE</button>
+                    <button class="btn secondary" id="clearBtn" style="flex: 1;">🗑️ CLEAR</button>
+                </div>
+            </div>
+
+            <div id="playUI" style="display: none;">
+                <div style="text-align: center; margin-bottom: 12px; font-size: 11px; opacity: 0.7;">
+                    PLAYING LEVEL <span id="playLevelNum">1</span>
+                </div>
+                <div style="display: flex; gap: 12px; justify-content: center;">
+                    <button class="btn secondary" id="pauseBtn">⏸️ PAUSE</button>
+                    <button class="btn secondary" id="exitBtn">🚪 EXIT</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="controls-bar">
+            <div class="dpad">
+                <div></div>
+                <button class="dpad-btn" id="upBtn">▲</button>
+                <div></div>
+                <button class="dpad-btn" id="leftBtn">◄</button>
+                <button class="dpad-btn dpad-center" id="centerBtn">🔄</button>
+                <button class="dpad-btn" id="rightBtn">►</button>
+                <div></div>
+                <button class="dpad-btn" id="downBtn">▼</button>
+                <div></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal" class="modal hidden">
+        <div class="modal-title" id="modalTitle"></div>
+        <div class="modal-content" id="modalContent"></div>
+        <div class="modal-buttons">
+            <button class="btn" id="modalBtnA" style="flex: 1;">OK</button>
+            <button class="btn secondary" id="modalBtnB" style="flex: 1;">CANCEL</button>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * HIDDENEAGLE46 COMPLETE BUNDLE
+         * All modules unified into single production-ready file
+         * Engine, VM, Cascade, Renderer, UI, PWA, everything
+         */
+
+        // ============================================================================
+        // CASCADE ALGEBRA ENGINE
+        // ============================================================================
+
+        class CascadeAlgebra {
+            static cascade(...operands) {
+                if (operands.length === 0) return 0;
+                if (operands.length === 1) return operands[0];
+                let accumulator = operands[0];
+                for (let i = 1; i < operands.length; i++) {
+                    const operand = operands[i];
+                    if (operand === 0) continue;
+                    if (accumulator === 0 && i > 1) return 0;
+                    accumulator = accumulator + (accumulator * operand);
+                }
+                return accumulator;
+            }
+
+            static parityBits(n) {
+                let count = 0;
+                let val = Math.abs(n) >>> 0;
+                while (val) {
+                    count += val & 1;
+                    val >>>= 1;
+                }
+                return count;
+            }
+
+            static isEvenParity(n) {
+                return this.parityBits(n) % 2 === 0;
+            }
+
+            static fold(n) {
+                if (n < 0) return this.fold(-n);
+                if (this.isEvenParity(n)) return n;
+                const complement = (~n) & 0xFF;
+                const fold1 = n ^ complement;
+                const fold2 = n ^ (n & 0x0F);
+                const fold3 = (n + complement) & 0xFF;
+                for (const c of [fold1, fold2, fold3]) {
+                    if (this.isEvenParity(c)) return c;
+                }
+                const rotated = ((n << 1) | (n >> 7)) & 0xFF;
+                return this.isEvenParity(rotated) ? rotated : rotated ^ 1;
+            }
+
+            static toQuaterbase4i(n) {
+                const binary = (n & 0xFF).toString(2).padStart(8, '0');
+                const pairs = [
+                    binary.substring(0, 2),
+                    binary.substring(2, 4),
+                    binary.substring(4, 6),
+                    binary.substring(6, 8),
+                ];
+                const map = { '00': 'p', '01': 'd', '10': 'b', '11': 'q' };
+                return pairs.map(pair => map[pair]).join('');
+            }
+
+            static collide(playerState, tileState) {
+                const result = this.cascade(playerState, tileState);
+                const stable = this.fold(result);
+                return stable;
+            }
+        }
+
+        // ============================================================================
+        // GAME CLOCK
+        // ============================================================================
+
+        class Clock {
+            constructor() {
+                this.frameCount = 0;
+                this.fps = 60;
+                this.lastFpsUpdate = performance.now();
+                this.elapsedTime = 0;
+            }
+
+            tick(deltaTime) {
+                this.frameCount++;
+                this.elapsedTime += deltaTime;
+                const now = performance.now();
+                if (now - this.lastFpsUpdate >= 1000) {
+                    this.fps = this.frameCount;
+                    this.frameCount = 0;
+                    this.lastFpsUpdate = now;
+                }
+            }
+
+            getFPS() {
+                return this.fps;
+            }
+
+            getElapsedSeconds() {
+                return this.elapsedTime;
+            }
+        }
+
+        // ============================================================================
+        // GAME VM (Virtual Machine)
+        // ============================================================================
+
+        class GameVM {
+            constructor() {
+                this.state = {
+                    playerX: 1,
+                    playerY: 1,
+                    playerXP: 0,
+                    playerHealth: 100,
+                    currentLevel: 1,
+                };
+                this.memory = new Uint8Array(256);
+            }
+
+            setState(key, value) {
+                this.state[key] = value;
+            }
+
+            getState(key) {
+                return this.state[key];
+            }
+
+            executeCascade(...args) {
+                return CascadeAlgebra.cascade(...args);
+            }
+
+            validateState() {
+                for (const [key, value] of Object.entries(this.state)) {
+                    if (typeof value === 'number' && !CascadeAlgebra.isEvenParity(value)) {
+                        this.state[key] = CascadeAlgebra.fold(value);
+                    }
+                }
+            }
+
+            serialize() {
+                return JSON.stringify(this.state);
+            }
+
+            deserialize(json) {
+                this.state = JSON.parse(json);
+                this.validateState();
+            }
+        }
+
+        // ============================================================================
+        // ACCUMULATOR
+        // ============================================================================
+
+        class Accumulator {
+            constructor(initialValue = 0) {
+                this.value = initialValue;
+                this.history = [initialValue];
+            }
+
+            cascade(...operands) {
+                this.value = CascadeAlgebra.cascade(this.value, ...operands);
+                this.history.push(this.value);
+                return this.value;
+            }
+
+            fold() {
+                this.value = CascadeAlgebra.fold(this.value);
+                return this.value;
+            }
+
+            reset(value = 0) {
+                this.value = value;
+                this.history = [value];
+            }
+        }
+
+        // ============================================================================
+        // TRANSLATOR
+        // ============================================================================
+
+        class Translator {
+            static cascadeToGameCoords(cascadeValue) {
+                return {
+                    tileX: cascadeValue % 32,
+                    tileY: Math.floor(cascadeValue / 32),
+                    id: cascadeValue,
+                };
+            }
+
+            static gameCoordsToXY(tileX, tileY, tileSize = 32) {
+                return {
+                    x: tileX * tileSize,
+                    y: tileY * tileSize,
+                };
+            }
+
+            static cascadeToState(cascadeValue) {
+                return {
+                    health: (cascadeValue & 0xF0) >> 4,
+                    xp: cascadeValue & 0x0F,
+                    level: Math.floor(cascadeValue / 16),
+                };
+            }
+        }
+
+        // ============================================================================
+        // INPUT ACCEPTOR
+        // ============================================================================
+
+        class Acceptor {
+            constructor() {
+                this.touchState = { down: false, x: 0, y: 0, dx: 0, dy: 0 };
+                this.buttons = { up: false, down: false, left: false, right: false, a: false, b: false };
+            }
+
+            onTouchStart(e) {
+                e.preventDefault();
+                const touch = e.touches[0];
+                this.touchState.down = true;
+                this.touchState.x = touch.clientX;
+                this.touchState.y = touch.clientY;
+            }
+
+            onTouchMove(e) {
+                e.preventDefault();
+                if (!this.touchState.down) return;
+                const touch = e.touches[0];
+                this.touchState.dx = touch.clientX - this.touchState.x;
+                this.touchState.dy = touch.clientY - this.touchState.y;
+            }
+
+            onTouchEnd(e) {
+                e.preventDefault();
+                this.touchState.down = false;
+            }
+
+            setButtonState(button, pressed) {
+                if (this.buttons.hasOwnProperty(button)) {
+                    this.buttons[button] = pressed;
+                }
+            }
+
+            getButtonState(button) {
+                return this.buttons[button] || false;
+            }
+        }
+
+        // ============================================================================
+        // RENDERER
+        // ============================================================================
+
+        class Renderer {
+            constructor(canvas, tileSize = 32) {
+                this.canvas = canvas;
+                this.ctx = canvas.getContext('2d');
+                this.tileSize = tileSize;
+                this.cameraX = 0;
+                this.cameraY = 0;
+                this.width = canvas.width;
+                this.height = canvas.height;
+            }
+
+            renderTile(worldX, worldY, emoji) {
+                const screenX = (worldX * this.tileSize) - this.cameraX;
+                const screenY = (worldY * this.tileSize) - this.cameraY;
+
+                if (screenX < -this.tileSize || screenX > this.width ||
+                    screenY < -this.tileSize || screenY > this.height) return;
+
+                this.ctx.fillStyle = '#0a0a0a';
+                this.ctx.fillRect(screenX, screenY, this.tileSize, this.tileSize);
+
+                this.ctx.font = `${this.tileSize}px system-ui`;
+                this.ctx.fillStyle = '#0f0';
+                this.ctx.fillText(emoji, screenX + 4, screenY + this.tileSize - 4);
+            }
+
+            renderGrid(grid, offsetX = 0, offsetY = 0) {
+                for (let y = 0; y < grid.length; y++) {
+                    for (let x = 0; x < grid[y].length; x++) {
+                        this.renderTile(offsetX + x, offsetY + y, grid[y][x]);
+                    }
+                }
+            }
+
+            setCameraPosition(x, y) {
+                this.cameraX = x;
+                this.cameraY = y;
+            }
+
+            clear() {
+                this.ctx.fillStyle = '#000500';
+                this.ctx.fillRect(0, 0, this.width, this.height);
+            }
+        }
+
+        // ============================================================================
+        // GAME ENGINE
+        // ============================================================================
+
+        class GameEngine {
+            constructor(canvas) {
+                this.canvas = canvas;
+                this.isRunning = false;
+                this.lastTime = performance.now();
+                this.deltaTime = 0;
+            }
+
+            start() {
+                this.isRunning = true;
+                this.lastTime = performance.now();
+                requestAnimationFrame(this.tick.bind(this));
+            }
+
+            stop() {
+                this.isRunning = false;
+            }
+
+            tick(timestamp) {
+                if (!this.isRunning) return;
+
+                this.deltaTime = (timestamp - this.lastTime) / 1000;
+                this.lastTime = timestamp;
+
+                this.update(this.deltaTime);
+                this.render();
+
+                requestAnimationFrame(this.tick.bind(this));
+            }
+
+            update(dt) {
+                // Override
+            }
+
+            render() {
+                // Override
+            }
+        }
+
+        // ============================================================================
+        // LEVEL ROM & PARSER
+        // ============================================================================
+
+        const LEVEL_THEMES = {
+            1: { name: 'Chromatic', walls: ['⬜', '⬛', '🟥'], floors: ['🟪', '⬛', '⬜'] },
+            2: { name: 'Crimson', walls: ['⬛', '🟥', '🟧'], floors: ['⬜', '🟦', '🟪'] },
+            3: { name: 'Sunset', walls: ['🟧', '🟨', '🟩'], floors: ['⬜', '🟦', '⬛'] },
+            4: { name: 'Tundra', walls: ['🟦', '⬜', '⬛'], floors: ['🟧', '🟩', '🟨'] },
+            5: { name: 'Twilight', walls: ['🟦', '🟪', '⬜'], floors: ['⬛', '🟥', '🟧'] },
+            6: { name: 'Void', walls: ['🟪', '⬛', '⬜'], floors: ['⬜', '🟥', '⬛'] },
+            7: { name: 'Synth', walls: ['🎚️', '🎹', '🎞️'], floors: ['🏜️', '🌄', '🌅'] },
+            8: { name: 'Traffic', walls: ['🚥', '🚦', '🥅'], floors: ['🌫️', '🌠', '🌌'] },
+            9: { name: 'Elemental', walls: ['🔥', '❄️', '🌀'], floors: ['🛣️', '🗾', '🌇'] },
+            10: { name: 'Celestial', walls: ['⭐', '🪨', '🍀'], floors: ['🎆', '🎇', '🎑'] },
+        };
+
+        class LevelROM {
+            static createBlankLevel(levelNum) {
+                const theme = LEVEL_THEMES[levelNum];
+                return Array(24).fill(null).map(() => Array(32).fill(theme.floors[0]));
+            }
+
+            static loadLevel(levelNum) {
+                const saved = localStorage.getItem(`sultan47_level_${levelNum}`);
+                if (saved) return JSON.parse(saved);
+                return this.createBlankLevel(levelNum);
+            }
+
+            static saveLevel(levelNum, grid) {
+                localStorage.setItem(`sultan47_level_${levelNum}`, JSON.stringify(grid));
+            }
+        }
+
+        // ============================================================================
+        // MAIN APPLICATION
+        // ============================================================================
+
+        class SultanGamePlatform extends GameEngine {
+            constructor(canvas) {
+                super(canvas);
+                this.clock = new Clock();
+                this.vm = new GameVM();
+                this.renderer = new Renderer(canvas);
+                this.acceptor = new Acceptor();
+                this.currentLevel = 1;
+                this.currentMode = 'editor';
+                this.currentGrid = LevelROM.loadLevel(1);
+                this.currentTile = LEVEL_THEMES[1].walls[0];
+                this.paintMode = 'wall';
+                this.setupUI();
+                this.setupInput();
+            }
+
+            setupUI() {
+                // Mode tabs
+                document.querySelectorAll('[data-mode]').forEach(btn => {
+                    btn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        const mode = btn.dataset.mode;
+                        this.switchMode(mode);
+                    });
+                });
+
+                // D-Pad
+                document.getElementById('upBtn').addEventListener('touchstart', () => this.movePlayer(0, -1));
+                document.getElementById('downBtn').addEventListener('touchstart', () => this.movePlayer(0, 1));
+                document.getElementById('leftBtn').addEventListener('touchstart', () => this.movePlayer(-1, 0));
+                document.getElementById('rightBtn').addEventListener('touchstart', () => this.movePlayer(1, 0));
+                document.getElementById('centerBtn').addEventListener('touchstart', () => this.resetPlayer());
+
+                // Editor buttons
+                document.getElementById('saveBtn').addEventListener('touchstart', () => this.saveLevel());
+                document.getElementById('clearBtn').addEventListener('touchstart', () => this.clearLevel());
+
+                // Level themes
+                this.initLevelThemes();
+            }
+
+            initLevelThemes() {
+                const container = document.getElementById('levelThemesContainer');
+                for (let i = 1; i <= 10; i++) {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn' + (i === 1 ? '' : ' secondary');
+                    btn.textContent = i;
+                    btn.style.minWidth = '100%';
+                    btn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        this.switchLevel(i);
+                    });
+                    container.appendChild(btn);
+                }
+            }
+
+            setupInput() {
+                document.addEventListener('touchstart', (e) => this.acceptor.onTouchStart(e));
+                document.addEventListener('touchmove', (e) => this.acceptor.onTouchMove(e));
+                document.addEventListener('touchend', (e) => this.acceptor.onTouchEnd(e));
+            }
+
+            switchMode(mode) {
+                this.currentMode = mode;
+                document.getElementById('modeDisplay').textContent = mode === 'editor' ? 'EDITOR' : 'PLAY';
+                document.getElementById('editorUI').style.display = mode === 'build' ? 'block' : 'none';
+                document.getElementById('playUI').style.display = mode === 'play' ? 'block' : 'none';
+                if (mode === 'play') {
+                    this.vm.setState('playerX', 1);
+                    this.vm.setState('playerY', 1);
+                }
+            }
+
+            switchLevel(levelNum) {
+                this.currentLevel = levelNum;
+                this.currentGrid = LevelROM.loadLevel(levelNum);
+                this.currentTile = LEVEL_THEMES[levelNum].walls[0];
+                document.getElementById('levelDisplay').textContent = levelNum;
+                this.updateTilePalette();
+            }
+
+            updateTilePalette() {
+                const theme = LEVEL_THEMES[this.currentLevel];
+                const container = document.getElementById('tileWallsContainer');
+                container.innerHTML = '';
+                theme.walls.forEach(tile => {
+                    const btn = document.createElement('button');
+                    btn.className = 'btn' + (tile === this.currentTile ? '' : ' secondary');
+                    btn.textContent = tile;
+                    btn.style.fontSize = '24px';
+                    btn.style.minHeight = '44px';
+                    btn.addEventListener('touchstart', (e) => {
+                        e.preventDefault();
+                        this.currentTile = tile;
+                        this.updateTilePalette();
+                    });
+                    container.appendChild(btn);
+                });
+            }
+
+            setTileAt(x, y, tile) {
+                if (x >= 0 && x < 32 && y >= 0 && y < 24) {
+                    this.currentGrid[y][x] = tile;
+                }
+            }
+
+            saveLevel() {
+                LevelROM.saveLevel(this.currentLevel, this.currentGrid);
+                this.showModal('SAVED', `Level ${this.currentLevel} saved to device.`);
+            }
+
+            clearLevel() {
+                const theme = LEVEL_THEMES[this.currentLevel];
+                this.currentGrid = Array(24).fill(null).map(() => Array(32).fill(theme.floors[0]));
+            }
+
+            movePlayer(dx, dy) {
+                const theme = LEVEL_THEMES[this.currentLevel];
+                let x = this.vm.getState('playerX') + dx;
+                let y = this.vm.getState('playerY') + dy;
+                x = Math.max(0, Math.min(x, 31));
+                y = Math.max(0, Math.min(y, 23));
+
+                const tile = this.currentGrid[y][x];
+                if (!theme.walls.includes(tile)) {
+                    this.vm.setState('playerX', x);
+                    this.vm.setState('playerY', y);
+                    const xpGain = CascadeAlgebra.cascade(this.vm.getState('playerXP'), 1);
+                    this.vm.setState('playerXP', CascadeAlgebra.fold(xpGain));
+                }
+                this.updateHUD();
+            }
+
+            resetPlayer() {
+                this.vm.setState('playerX', 1);
+                this.vm.setState('playerY', 1);
+            }
+
+            updateHUD() {
+                document.getElementById('playerXP').textContent = this.vm.getState('playerXP');
+                document.getElementById('fpsDisplay').textContent = this.clock.getFPS();
+            }
+
+            showModal(title, content) {
+                document.getElementById('modalTitle').textContent = title;
+                document.getElementById('modalContent').textContent = content;
+                document.getElementById('modal').classList.remove('hidden');
+            }
+
+            hideModal() {
+                document.getElementById('modal').classList.add('hidden');
+            }
+
+            update(dt) {
+                this.clock.tick(dt);
+                this.vm.validateState();
+                this.updateHUD();
+            }
+
+            render() {
+                this.renderer.clear();
+
+                if (this.currentMode === 'editor' || this.currentMode === 'build') {
+                    const theme = LEVEL_THEMES[this.currentLevel];
+                    this.renderer.renderGrid(this.currentGrid, 0, 0);
+                } else if (this.currentMode === 'play') {
+                    const theme = LEVEL_THEMES[this.currentLevel];
+                    this.renderer.renderGrid(this.currentGrid, 0, 0);
+
+                    const playerX = this.vm.getState('playerX');
+                    const playerY = this.vm.getState('playerY');
+                    const screenX = playerX * 32;
+                    const screenY = playerY * 32;
+
+                    this.renderer.ctx.font = '32px system-ui';
+                    this.renderer.ctx.fillStyle = '#0f0';
+                    this.renderer.ctx.fillText('🧑', screenX + 4, screenY + 28);
+                }
+            }
+        }
+
+        // ============================================================================
+        // BOOTSTRAP & INITIALIZATION
+        // ============================================================================
+
+        window.addEventListener('load', () => {
+            const canvas = document.getElementById('gameCanvas');
+            const platform = new SultanGamePlatform(canvas);
+            platform.start();
+
+            // Service Worker
+            if ('serviceWorker' in navigator) {
+                const swCode = `
+self.addEventListener('install', e => self.skipWaiting());
+self.addEventListener('activate', e => e.waitUntil(clients.claim()));
+self.addEventListener('fetch', e => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
+                `;
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                navigator.serviceWorker.register(swUrl).catch(() => {});
+            }
+
+            // Modal close
+            document.getElementById('modalBtnA').addEventListener('touchstart', () => platform.hideModal());
+            document.getElementById('modalBtnB').addEventListener('touchstart', () => platform.hideModal());
+
+            // Prevent default touch behaviors
+            document.addEventListener('touchmove', (e) => {
+                if (e.target.closest('.ui-overlay') || e.target === canvas) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+        });
+    </script>
+</body>
+</html>
