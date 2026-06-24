@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#00ff00">
+    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="./manifest.json">
+    <link rel="stylesheet" href="./styles.css">
+    <title>SULTAN-47 • HIDDENEAGLE46</title>
+</head>
+<body>
+
+    <!-- GAME CANVAS -->
+    <canvas id="gameCanvas"></canvas>
+
+    <!-- UI OVERLAY -->
+    <div class="ui-overlay">
+
+        <!-- HUD TOP -->
+        <div class="hud-top">
+            <div class="hud-stat">
+                MODE: <span id="modeDisplay">BUILD</span><br>
+                XP: <span id="playerXP">0</span>
+            </div>
+            <div class="hud-title">▄█▀ SULTAN-47</div>
+            <div class="hud-stat">
+                FPS: <span id="fpsDisplay">60</span><br>
+                LVL: <span id="levelDisplay">1</span>
+            </div>
+        </div>
+
+        <!-- SCROLL CONTENT AREA -->
+        <div class="scroll-area">
+
+            <!-- MODE TABS -->
+            <div class="mode-tabs">
+                <button class="mode-tab active" data-mode="build">✏️ BUILD</button>
+                <button class="mode-tab" data-mode="play">▶️ PLAY</button>
+            </div>
+
+            <!-- EDITOR UI -->
+            <div id="editorUI">
+
+                <!-- LEVEL THEME SELECTOR -->
+                <div class="panel">
+                    <div class="panel-label">Level Theme</div>
+                    <div class="theme-grid" id="levelThemesContainer"></div>
+                </div>
+
+                <!-- TILE PALETTE -->
+                <div class="panel">
+                    <div class="panel-label">Tiles</div>
+                    <div class="tile-grid" id="tileWallsContainer"></div>
+                </div>
+
+                <!-- TOOLS -->
+                <div class="grid-2 mb-12">
+                    <button class="btn full" id="saveBtn">💾 SAVE</button>
+                    <button class="btn danger full" id="clearBtn">🗑️ CLEAR</button>
+                </div>
+
+            </div>
+
+            <!-- PLAY UI -->
+            <div id="playUI" class="hidden">
+                <div class="panel">
+                    <div class="panel-label">Playing Level <span id="playLevelNum">1</span></div>
+                    <div class="grid-2">
+                        <button class="btn secondary" id="pauseBtn">⏸️ PAUSE</button>
+                        <button class="btn secondary" id="exitBtn">🚪 EXIT</button>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- CONTROLS BAR -->
+        <div class="controls-bar">
+
+            <!-- D-PAD -->
+            <div class="dpad">
+                <div></div>
+                <button class="dpad-btn" id="upBtn">▲</button>
+                <div></div>
+                <button class="dpad-btn" id="leftBtn">◄</button>
+                <button class="dpad-btn dpad-center" id="centerBtn">🔄</button>
+                <button class="dpad-btn" id="rightBtn">►</button>
+                <div></div>
+                <button class="dpad-btn" id="downBtn">▼</button>
+                <div></div>
+            </div>
+
+            <!-- ACTION BUTTONS -->
+            <div class="action-btns">
+                <button class="action-btn a" id="btnA">✦</button>
+                <button class="action-btn b" id="btnB">✕</button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <!-- MODAL -->
+    <div id="modal" class="modal hidden">
+        <div class="modal-title" id="modalTitle"></div>
+        <div class="modal-content" id="modalContent"></div>
+        <div class="modal-buttons" id="modalButtons"></div>
+    </div>
+
+    <!-- ── MODULES (dependency order) ──────────────────────── -->
+
+    <!-- Layer 1: Core Algebra -->
+    <script src="./src/cascade/CascadeAlgebra.js"></script>
+
+    <!-- Layer 2: Core Utilities -->
+    <script src="./src/core/Clock.js"></script>
+    <script src="./src/core/VM.js"></script>
+    <script src="./src/core/Accumulator.js"></script>
+    <script src="./src/core/Translator.js"></script>
+
+    <!-- Layer 3: Input -->
+    <script src="./src/input/Acceptor.js"></script>
+
+    <!-- Layer 4: Rendering -->
+    <script src="./src/renderer/Renderer.js"></script>
+
+    <!-- Layer 5: Engine -->
+    <script src="./src/engine/Engine.js"></script>
+
+    <!-- Layer 6: ROM & Data -->
+    <script src="./src/rom/LevelROM.js"></script>
+
+    <!-- Layer 7: Game Logic -->
+    <script src="./src/game/Game.js"></script>
+
+    <!-- Layer 8: UI -->
+    <script src="./src/ui/UI.js"></script>
+
+    <!-- Layer 9: Orchestration -->
+    <script src="./src/orchestrator/Orchestrator.js"></script>
+
+    <!-- Layer 10: Bootstrap -->
+    <script src="./src/app.js"></script>
+
+</body>
+</html>
