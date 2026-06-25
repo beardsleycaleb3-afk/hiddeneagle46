@@ -6,20 +6,24 @@
 <meta name="theme-color" content="#00ff00">
 <meta name="mobile-web-app-capable" content="yes">
 <link rel="manifest" href="./manifest.json">
-<title>SULTAN-47</title>
+<title>hiddeneagle46</title>
 <style>
 :root{--neon:#0f0;--bg:#000500;--dim:rgba(0,20,0,.92)}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;tap-highlight-color:transparent}
 html,body{width:100%;height:100vh;height:100dvh;overflow:hidden;background:var(--bg);color:var(--neon);font-family:'Courier New',monospace;font-size:13px;text-shadow:0 0 6px rgba(0,255,0,.5)}
 body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(0,255,0,.04) 0,rgba(0,255,0,.04) 1px,transparent 1px,transparent 2px);pointer-events:none;z-index:999}
+
 #hud{position:fixed;top:0;left:0;right:0;height:44px;background:var(--dim);border-bottom:1px solid var(--neon);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 10px;z-index:50;font-size:10px}
 #hud-right{text-align:right}
 #hud-center{font-weight:bold;font-size:11px;letter-spacing:2px;text-align:center}
+
 #c{position:fixed;top:44px;left:0;right:0;bottom:170px;touch-action:none;display:block}
+
 #bottom{position:fixed;bottom:0;left:0;right:0;height:170px;background:var(--dim);border-top:1px solid var(--neon);display:flex;flex-direction:column;z-index:50}
 #tabs{display:flex;border-bottom:1px solid rgba(0,255,0,.3)}
 .tab{flex:1;padding:7px;font:bold 11px 'Courier New',monospace;color:var(--neon);background:transparent;border:none;border-bottom:2px solid transparent;text-transform:uppercase;letter-spacing:1px;cursor:pointer;text-shadow:0 0 6px rgba(0,255,0,.5)}
 .tab.on{background:var(--neon);border-bottom-color:var(--neon);text-shadow:none;color:#000}
+
 #buildPanel{flex:1;display:flex;flex-direction:column;overflow:hidden}
 #themes{display:flex;gap:4px;padding:6px 8px;overflow-x:auto;border-bottom:1px solid rgba(0,255,0,.2);scrollbar-width:none}
 #themes::-webkit-scrollbar{display:none}
@@ -32,6 +36,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 #build-actions{display:flex;gap:6px;padding:5px 8px}
 .act-btn{flex:1;height:30px;font:bold 11px 'Courier New',monospace;cursor:pointer;border:1px solid var(--neon);background:var(--neon);color:#000;text-transform:uppercase}
 .act-btn.sec{background:transparent;color:var(--neon)}
+
 #playPanel{flex:1;display:none;flex-direction:row;align-items:center;justify-content:space-between;padding:8px 16px}
 #dpad{display:grid;grid-template-columns:repeat(3,50px);grid-template-rows:repeat(3,50px);gap:5px}
 .dp{width:50px;height:50px;background:var(--neon);color:#000;border:none;font-size:20px;font-weight:bold;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:4px;touch-action:manipulation}
@@ -43,6 +48,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .abtn:active{opacity:.7;transform:scale(.88)}
 .abtn.A{background:#0a5;color:#fff}
 .abtn.B{background:#a00;color:#fff}
+
 #modal{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:200}
 #modal.show{display:flex}
 #mbox{background:#0a0a0a;border:2px solid var(--neon);padding:20px;min-width:280px;max-width:90vw;box-shadow:0 0 30px rgba(0,255,0,.3)}
@@ -51,8 +57,10 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 #mbtns{display:flex;gap:8px}
 .mbtn{flex:1;min-height:44px;font:bold 12px 'Courier New',monospace;cursor:pointer;border:1px solid var(--neon);background:var(--neon);color:#000;text-transform:uppercase}
 .mbtn.sec{background:transparent;color:var(--neon)}
+
 #toast{position:fixed;bottom:180px;left:50%;transform:translateX(-50%);background:rgba(0,20,0,.95);border:1px solid var(--neon);color:var(--neon);padding:7px 18px;font-size:12px;letter-spacing:1px;z-index:300;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
 #toast.show{opacity:1}
+
 #installBanner{position:fixed;top:44px;left:0;right:0;background:rgba(0,80,0,.95);border-bottom:1px solid var(--neon);padding:10px 14px;display:none;align-items:center;justify-content:space-between;z-index:100;gap:10px}
 #installBanner.show{display:flex}
 #installBanner span{font-size:11px;line-height:1.4}
@@ -128,9 +136,9 @@ const CA = {
     if(!ops.length) return 0;
     let a = ops[0];
     for(let i=1;i<ops.length;i++){
-      if(ops[i]===0) continue;
-      if(a===0&&i>1) return 0;
-      a = a + a*ops[i];
+      if(ops[i] === 0) continue;
+      if(a === 0 && i > 1) return 0;
+      a = a + a * ops[i];
     }
     return a;
   },
@@ -153,16 +161,16 @@ const CA = {
 };
 
 const THEMES = {
-  1:{n:'CHROMATIC', w:['🕸️','🛟','🫧'], f:['🟪','⬛','⬜']},
-  2:{n:'CRIMSON', w:['📼','🖼️','🃏'], f:['⬜','🟦','🟪']},
-  3:{n:'SUNSET', w:['💽','🎫','🎟️'], f:['⬜','🟦','⬛']},
-  4:{n:'TUNDRA', w:['🧮','💾','📱'], f:['🟧','🟩','🟨']},
-  5:{n:'TWILIGHT', w:['🩻','🪟','🧱'], f:['⬛','🟥','🟧']},
-  6:{n:'VOID', w:['📊','🗄️','🪜'], f:['⬜','🟥','⬛']},
-  7:{n:'SYNTH', w:['🎚️','🎹','🎞️'], f:['🔲','🔳','🟩']},
-  8:{n:'TRAFFIC', w:['🚥','🚦','🥅'], f:['🌫️','⚛️','🌌']},
-  9:{n:'ELEMENTAL', w:['⏸️','⏺️','⏹️'], f:['🈴','🗾','🌇']},
-  10:{n:'CELESTIAL', w:['🔰','*️⃣','❎'], f:['🟫','🟧','🎑']},
+  1:{n:'CHROMATIC', w:['⬜','⬛','🟥'], f:['🟪','⬛','⬜']},
+  2:{n:'CRIMSON', w:['⬛','🟥','🟧'], f:['⬜','🟦','🟪']},
+  3:{n:'SUNSET', w:['🟧','🟨','🟩'], f:['⬜','🟦','⬛']},
+  4:{n:'TUNDRA', w:['🟦','⬜','⬛'], f:['🟧','🟩','🟨']},
+  5:{n:'TWILIGHT', w:['🟦','🟪','⬜'], f:['⬛','🟥','🟧']},
+  6:{n:'VOID', w:['🟪','⬛','⬜'], f:['⬜','🟥','⬛']},
+  7:{n:'SYNTH', w:['🎚️','🎹','🎞️'], f:['🏜️','🌄','🌅']},
+  8:{n:'TRAFFIC', w:['🚥','🚦','🥅'], f:['🌫️','🌠','🌌']},
+  9:{n:'ELEMENTAL', w:['🔥','❄️','🌀'], f:['🛣️','🗾','🌇']},
+  10:{n:'CELESTIAL', w:['⭐','🪨','🍀'], f:['🎆','🎇','🎑']},
 };
 
 const WW = 32, WH = 30, TS = 40;
@@ -185,9 +193,10 @@ let state = {
 };
 
 const canvas = document.getElementById('c');
-const ctx = canvas.getContext('2d');
+const ctx = canvas.getContext('2d', { alpha: false });
 let DPR = window.devicePixelRatio || 1;
 let CW = 0, CH = 0;
+let lastTouch = null;
 
 function resizeCanvas(){
   DPR = window.devicePixelRatio || 1;
@@ -196,8 +205,6 @@ function resizeCanvas(){
   CH = Math.max(1, rect.height);
   canvas.width = Math.round(CW * DPR);
   canvas.height = Math.round(CH * DPR);
-  canvas.style.width = CW + 'px';
-  canvas.style.height = CH + 'px';
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   ctx.imageSmoothingEnabled = false;
 }
@@ -231,13 +238,74 @@ function isWall(lvl, tile){
   return tile && THEMES[lvl].w.includes(tile);
 }
 
+function clamp(v,min,max){
+  return Math.max(min, Math.min(max, v));
+}
+
 function centerCamera(){
+  const maxX = Math.max(0, WW*TS - CW);
+  const maxY = Math.max(0, WH*TS - CH);
   const targetX = state.px*TS - CW/2 + TS/2;
   const targetY = state.py*TS - CH/2 + TS/2;
   state.camX += (targetX - state.camX) * 0.18;
   state.camY += (targetY - state.camY) * 0.18;
-  state.camX = Math.max(0, Math.min(WW*TS - CW, state.camX));
-  state.camY = Math.max(0, Math.min(WH*TS - CH, state.camY));
+  state.camX = clamp(state.camX, 0, maxX);
+  state.camY = clamp(state.camY, 0, maxY);
+}
+
+function drawMonitorView(){
+  const mapW = WW * TS;
+  const mapH = WH * TS;
+  const scale = Math.min(CW / mapW, CH / mapH);
+  const drawW = mapW * scale;
+  const drawH = mapH * scale;
+  const ox = (CW - drawW) * 0.5;
+  const oy = (CH - drawH) * 0.5;
+
+  ctx.save();
+  ctx.translate(ox, oy);
+  ctx.scale(scale, scale);
+
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `${TS-2}px system-ui,sans-serif`;
+
+  for(let y=0;y<WH;y++){
+    for(let x=0;x<WW;x++){
+      ctx.fillText(state.grid[y][x], x*TS + TS/2, y*TS + TS/2);
+    }
+  }
+
+  if(state.mode === 'play'){
+    const px = state.px*TS + TS/2;
+    const py = state.py*TS + TS/2;
+    const pulse = 10 + 4*Math.sin(state.frames*0.1);
+    ctx.shadowColor = '#0f0';
+    ctx.shadowBlur = pulse;
+    ctx.fillText('🧑', px, py);
+    ctx.shadowBlur = 0;
+  }
+
+  if(state.mode === 'build'){
+    ctx.strokeStyle = 'rgba(0,255,0,0.08)';
+    ctx.lineWidth = 0.5;
+    for(let x=0;x<=WW;x++){
+      const sx = x*TS;
+      ctx.beginPath();
+      ctx.moveTo(sx,0);
+      ctx.lineTo(sx,WH*TS);
+      ctx.stroke();
+    }
+    for(let y=0;y<=WH;y++){
+      const sy = y*TS;
+      ctx.beginPath();
+      ctx.moveTo(0,sy);
+      ctx.lineTo(WW*TS,sy);
+      ctx.stroke();
+    }
+  }
+
+  ctx.restore();
 }
 
 function render(){
@@ -245,50 +313,13 @@ function render(){
   ctx.fillStyle = '#000500';
   ctx.fillRect(0,0,CW,CH);
 
-  const camX = state.camX, camY = state.camY;
-  const x0 = Math.max(0, Math.floor(camX/TS));
-  const y0 = Math.max(0, Math.floor(camY/TS));
-  const x1 = Math.min(WW-1, Math.ceil((camX+CW)/TS));
-  const y1 = Math.min(WH-1, Math.ceil((camY+CH)/TS));
+  drawMonitorView();
 
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = `${TS-2}px system-ui,sans-serif`;
-
-  for(let ty=y0;ty<=y1;ty++){
-    for(let tx=x0;tx<=x1;tx++){
-      ctx.fillText(state.grid[ty][tx], tx*TS - camX + TS/2, ty*TS - camY + TS/2);
-    }
-  }
-
-  if(state.mode === 'build'){
-    ctx.strokeStyle = 'rgba(0,255,0,0.07)';
-    ctx.lineWidth = 0.5;
-    for(let tx=x0;tx<=x1+1;tx++){
-      const sx = tx*TS - camX;
-      ctx.beginPath(); ctx.moveTo(sx,0); ctx.lineTo(sx,CH); ctx.stroke();
-    }
-    for(let ty=y0;ty<=y1+1;ty++){
-      const sy = ty*TS - camY;
-      ctx.beginPath(); ctx.moveTo(0,sy); ctx.lineTo(CW,sy); ctx.stroke();
-    }
-    if(state.tile){
-      ctx.fillStyle = 'rgba(0,255,0,0.7)';
-      ctx.font = `10px 'Courier New',monospace`;
-      ctx.textAlign = 'left';
-      ctx.fillText(`TILE: ${state.tile}  CAM: ${Math.floor(camX/TS)},${Math.floor(camY/TS)}`, 8, CH-8);
-    }
-  }
-
-  if(state.mode === 'play'){
-    const px = state.px*TS - camX + TS/2;
-    const py = state.py*TS - camY + TS/2;
-    const pulse = 10 + 4*Math.sin(state.frames*0.1);
-    ctx.shadowColor = '#0f0';
-    ctx.shadowBlur = pulse;
-    ctx.font = `${TS-2}px system-ui,sans-serif`;
-    ctx.fillText('🧑', px, py);
-    ctx.shadowBlur = 0;
+  if(state.mode === 'build' && state.tile){
+    ctx.fillStyle = 'rgba(0,255,0,0.75)';
+    ctx.font = `10px 'Courier New',monospace`;
+    ctx.textAlign = 'left';
+    ctx.fillText(`TILE: ${state.tile}  CAM: ${Math.floor(state.camX/TS)},${Math.floor(state.camY/TS)}`, 8, CH - 8);
   }
 
   ctx.fillStyle = 'rgba(0,0,0,0.05)';
@@ -317,18 +348,36 @@ function updateHUD(){
   document.getElementById('statPos').textContent = `${state.px},${state.py}`;
 }
 
+function pointerToTile(clientX, clientY){
+  const rect = canvas.getBoundingClientRect();
+  const sx = clientX - rect.left;
+  const sy = clientY - rect.top;
+
+  const mapW = WW * TS;
+  const mapH = WH * TS;
+  const scale = Math.min(CW / mapW, CH / mapH);
+  const drawW = mapW * scale;
+  const drawH = mapH * scale;
+  const ox = (CW - drawW) * 0.5;
+  const oy = (CH - drawH) * 0.5;
+
+  const lx = (sx - ox) / scale;
+  const ly = (sy - oy) / scale;
+  const tx = Math.floor(lx / TS);
+  const ty = Math.floor(ly / TS);
+  return { tx, ty, inside: tx>=0 && ty>=0 && tx<WW && ty<WH };
+}
+
 function paintAt(touch){
   if(!state.tile) return;
-  const rect = canvas.getBoundingClientRect();
-  const sx = touch.clientX - rect.left;
-  const sy = touch.clientY - rect.top;
-  const tx = Math.floor((sx + state.camX) / TS);
-  const ty = Math.floor((sy + state.camY) / TS);
-  setTile(tx, ty, state.tile);
+  const p = pointerToTile(touch.clientX, touch.clientY);
+  if(!p.inside) return;
+  setTile(p.tx, p.ty, state.tile);
 }
 
 canvas.addEventListener('touchstart', e=>{
   e.preventDefault();
+  lastTouch = e.touches[0] || null;
   if(state.mode !== 'build') return;
   if(e.touches.length === 1){
     state.painting = true;
@@ -372,12 +421,12 @@ function movePlayer(dx,dy){
     setTile(nx, ny, THEMES[state.level].f[0]);
     showToast(`💎 +${tile==='🏆'?10:tile==='💰'?5:1} GEM`);
   }
-  if(tile==='❤️'||tile==='🍎'||tile==='💊'){
+  if(tile === '❤️'||tile === '🍎'||tile === '💊'){
     state.hp = Math.min(100, state.hp + (tile==='💊'?20:10));
     setTile(nx, ny, THEMES[state.level].f[0]);
     showToast('❤️ HEALED');
   }
-  if(tile==='⭐'||tile==='🌟'){
+  if(tile === '⭐'||tile === '🌟'){
     state.xp += 25;
     setTile(nx, ny, THEMES[state.level].f[0]);
     showToast('⭐ +25 XP');
@@ -387,6 +436,7 @@ function movePlayer(dx,dy){
     showToast('💥 -10 HP');
     if(state.hp <= 0) gameOver();
   }
+
   centerCamera();
 }
 
@@ -423,9 +473,9 @@ function bindDpad(id, dx, dy){
 }
 
 bindDpad('dU', 0,-1);
-bindDpad('dD', 0,1);
-bindDpad('dL',-1,0);
-bindDpad('dR', 1,0);
+bindDpad('dD', 0, 1);
+bindDpad('dL',-1, 0);
+bindDpad('dR', 1, 0);
 
 document.getElementById('dC').addEventListener('touchstart', e=>{
   e.preventDefault();
@@ -436,7 +486,7 @@ document.getElementById('btnA').addEventListener('touchstart', e=>{
   e.preventDefault();
   const dirs=[[0,-1],[0,1],[-1,0],[1,0]];
   for(const [dx,dy] of dirs){
-    const t = getTile(state.px+dx, state.py+dy);
+    const t=getTile(state.px+dx,state.py+dy);
     if(t && ['🧙','📜','💬','❗','❓'].includes(t)){
       showModal('🔍 INSPECT', `You examine the area.
 Tile: ${t}`, [{l:'OK',fn:closeModal}]);
@@ -464,10 +514,10 @@ function switchMode(mode){
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on', t.dataset.mode===mode));
   document.getElementById('buildPanel').style.display = mode==='build' ? 'flex' : 'none';
   document.getElementById('playPanel').style.display = mode==='play' ? 'flex' : 'none';
-  if(mode==='play'){
+  if(mode === 'play'){
     state.px = 1; state.py = 1;
     state.hp = 100;
-    state.camX = 0; state.camY = 0;
+    centerCamera();
     showToast('▶ PLAYING LVL ' + state.level);
   }
 }
@@ -569,8 +619,10 @@ canvas.addEventListener('touchmove', e=>{
     e.preventDefault();
     const mx = (e.touches[0].clientX + e.touches[1].clientX)/2;
     const my = (e.touches[0].clientY + e.touches[1].clientY)/2;
-    state.camX = Math.max(0, Math.min(WW*TS - CW, camStart.x - (mx - panStart.x)));
-    state.camY = Math.max(0, Math.min(WH*TS - CH, camStart.y - (my - panStart.y)));
+    const maxX = Math.max(0, WW*TS - CW);
+    const maxY = Math.max(0, WH*TS - CH);
+    state.camX = clamp(camStart.x - (mx - panStart.x), 0, maxX);
+    state.camY = clamp(camStart.y - (my - panStart.y), 0, maxY);
   }
 }, {passive:false});
 
@@ -641,6 +693,16 @@ window.addEventListener('appinstalled', ()=>{
   document.getElementById('installBanner').classList.remove('show');
 });
 
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').then(r=>{
+      console.log('[SW] registered scope:', r.scope);
+    }).catch(e=>{
+      console.warn('[SW] failed:', e.message);
+    });
+  });
+}
+
 let resizeTimer = null;
 function onResize(){
   clearTimeout(resizeTimer);
@@ -651,6 +713,7 @@ function onResize(){
 }
 
 window.addEventListener('resize', onResize);
+window.addEventListener('orientationchange', onResize);
 
 function init(){
   resizeCanvas();
@@ -664,17 +727,6 @@ function init(){
 }
 
 window.addEventListener('load', init);
-
-  if('serviceWorker' in navigator){
-  window.addEventListener('load',()=>{
-    navigator.serviceWorker.register('./sw.js').then(r=>{
-      console.log('[SW] registered scope:', r.scope);
-    }).catch(e=>{
-      console.warn('[SW] failed:', e.message);
-    });
-  });
-}
-
 </script>
 </body>
 </html>
