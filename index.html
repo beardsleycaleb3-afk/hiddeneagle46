@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#00ff00">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="./manifest.json">
+<title>SULTAN-47</title>
+<style>
+:root{--neon:#0f0;--bg:#000500;--dim:rgba(0,20,0,.92)}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;tap-highlight-color:transparent}
+html,body{width:100%;height:100vh;height:100dvh;overflow:hidden;background:var(--bg);color:var(--neon);font-family:'Courier New',monospace;font-size:13px;text-shadow:0 0 6px rgba(0,255,0,.5)}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,rgba(0,255,0,.04) 0,rgba(0,255,0,.04) 1px,transparent 1px,transparent 2px);pointer-events:none;z-index:999}
+
+/* HUD */
+#hud{position:fixed;top:0;left:0;right:0;height:44px;background:var(--dim);border-bottom:1px solid var(--neon);display:grid;grid-template-columns:1fr auto 1fr;align-items:center;padding:0 10px;z-index:50;font-size:10px}
+#hud-right{text-align:right}
+#hud-center{font-weight:bold;font-size:11px;letter-spacing:2px;text-align:center}
+
+/* CANVAS */
+#c{position:fixed;top:44px;left:0;right:0;bottom:170px;touch-action:none;display:block}
+
+/* BOTTOM AREA */
+#bottom{position:fixed;bottom:0;left:0;right:0;height:170px;background:var(--dim);border-top:1px solid var(--neon);display:flex;flex-direction:column;z-index:50}
+
+/* MODE TABS */
+#tabs{display:flex;border-bottom:1px solid rgba(0,255,0,.3)}
+.tab{flex:1;padding:7px;font:bold 11px 'Courier New',monospace;color:var(--neon);background:transparent;border:none;border-bottom:2px solid transparent;text-transform:uppercase;letter-spacing:1px;cursor:pointer;text-shadow:0 0 6px rgba(0,255,0,.5)}
+.tab.on{background:rgba(0,255,0,.1);border-bottom-color:var(--neon);text-shadow:none;color:#000;background:var(--neon)}
+
+/* BUILD PANEL */
+#buildPanel{flex:1;display:flex;flex-direction:column;overflow:hidden}
+#themes{display:flex;gap:4px;padding:6px 8px;overflow-x:auto;border-bottom:1px solid rgba(0,255,0,.2);scrollbar-width:none}
+#themes::-webkit-scrollbar{display:none}
+.theme-btn{min-width:36px;height:30px;background:transparent;border:1px solid rgba(0,255,0,.4);color:var(--neon);font:bold 11px 'Courier New',monospace;cursor:pointer;flex-shrink:0}
+.theme-btn.on{background:var(--neon);color:#000}
+#tiles{display:flex;gap:5px;padding:6px 8px;overflow-x:auto;scrollbar-width:none;align-items:center;touch-action:pan-x}
+#tiles::-webkit-scrollbar{display:none}
+.tile-btn{width:42px;height:42px;font-size:26px;background:rgba(0,255,0,.05);border:1.5px solid rgba(0,255,0,.3);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;touch-action:manipulation}
+.tile-btn.on{border-color:var(--neon);background:rgba(0,255,0,.2)}
+#build-actions{display:flex;gap:6px;padding:5px 8px}
+.act-btn{flex:1;height:30px;font:bold 11px 'Courier New',monospace;cursor:pointer;border:1px solid var(--neon);background:var(--neon);color:#000;text-transform:uppercase}
+.act-btn.sec{background:transparent;color:var(--neon)}
+
+/* PLAY PANEL */
+#playPanel{flex:1;display:none;flex-direction:row;align-items:center;justify-content:space-between;padding:8px 16px}
+#dpad{display:grid;grid-template-columns:repeat(3,50px);grid-template-rows:repeat(3,50px);gap:5px}
+.dp{width:50px;height:50px;background:var(--neon);color:#000;border:none;font-size:20px;font-weight:bold;display:flex;align-items:center;justify-content:center;cursor:pointer;border-radius:4px;touch-action:manipulation}
+.dp:active{opacity:.7;transform:scale(.9)}
+.dp.mid{background:transparent;border:1px solid rgba(0,255,0,.4);color:var(--neon);font-size:14px}
+#stats{font-size:10px;line-height:1.7;text-align:center}
+#act-btns{display:flex;flex-direction:column;gap:10px}
+.abtn{width:52px;height:52px;border-radius:50%;border:none;font-size:18px;font-weight:bold;cursor:pointer;touch-action:manipulation;display:flex;align-items:center;justify-content:center}
+.abtn:active{opacity:.7;transform:scale(.88)}
+.abtn.A{background:#0a5;color:#fff}
+.abtn.B{background:#a00;color:#fff}
+
+/* MODAL */
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.85);display:none;align-items:center;justify-content:center;z-index:200}
+#modal.show{display:flex}
+#mbox{background:#0a0a0a;border:2px solid var(--neon);padding:20px;min-width:280px;max-width:90vw;box-shadow:0 0 30px rgba(0,255,0,.3)}
+#mtitle{font-weight:bold;font-size:14px;letter-spacing:1px;margin-bottom:10px;text-transform:uppercase}
+#mbody{font-size:12px;line-height:1.6;margin-bottom:16px;white-space:pre-line;opacity:.85}
+#mbtns{display:flex;gap:8px}
+.mbtn{flex:1;min-height:44px;font:bold 12px 'Courier New',monospace;cursor:pointer;border:1px solid var(--neon);background:var(--neon);color:#000;text-transform:uppercase}
+.mbtn.sec{background:transparent;color:var(--neon)}
+
+/* TOAST */
+#toast{position:fixed;bottom:180px;left:50%;transform:translateX(-50%);background:rgba(0,20,0,.95);border:1px solid var(--neon);color:var(--neon);padding:7px 18px;font-size:12px;letter-spacing:1px;z-index:300;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+#toast.show{opacity:1}
+
+/* INSTALL BANNER */
+#installBanner{position:fixed;top:44px;left:0;right:0;background:rgba(0,80,0,.95);border-bottom:1px solid var(--neon);padding:10px 14px;display:none;align-items:center;justify-content:space-between;z-index:100;gap:10px}
+#installBanner.show{display:flex}
+#installBanner span{font-size:11px;line-height:1.4}
+#installBtn{min-height:36px;padding:0 14px;background:var(--neon);color:#000;border:none;font:bold 11px 'Courier New',monospace;cursor:pointer;white-space:nowrap;touch-action:manipulation}
+</style>
+</head>
+<body>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="hud-left">LVL:<span id="lvlNum">1</span> XP:<span id="xpNum">0</span></div>
+  <div id="hud-center">▄█▀ SULTAN-47</div>
+  <div id="hud-right">FPS:<span id="fpsNum">60</span><br>HP:<span id="hpNum">100</span></div>
+</div>
+
+<!-- INSTALL BANNER -->
+<div id="installBanner">
+  <span>📲 Install Sultan-47 as an app</span>
+  <button id="installBtn">INSTALL</button>
+  <button class="mbtn sec" id="dismissInstall" style="flex:0;padding:0 10px;min-height:36px;font-size:11px">✕</button>
+</div>
+
+<!-- GAME CANVAS -->
+<canvas id="c"></canvas>
+
+<!-- BOTTOM CONTROLS -->
+<div id="bottom">
+  <div id="tabs">
+    <button class="tab on" data-mode="build">✏️ BUILD</button>
+    <button class="tab"    data-mode="play">▶️ PLAY</button>
+  </div>
+
+  <!-- BUILD PANEL -->
+  <div id="buildPanel">
+    <div id="themes"></div>
+    <div id="tiles"></div>
+    <div id="build-actions">
+      <button class="act-btn" id="saveBtn">💾 SAVE</button>
+      <button class="act-btn sec" id="genBtn">⚡ SEED</button>
+      <button class="act-btn sec" id="clearBtn">🗑️ CLEAR</button>
+    </div>
+  </div>
+
+  <!-- PLAY PANEL -->
+  <div id="playPanel">
+    <div id="dpad">
+      <div></div>
+      <button class="dp" id="dU">▲</button>
+      <div></div>
+      <button class="dp" id="dL">◄</button>
+      <button class="dp mid" id="dC">🔄</button>
+      <button class="dp" id="dR">►</button>
+      <div></div>
+      <button class="dp" id="dD">▼</button>
+      <div></div>
+    </div>
+    <div id="stats">
+      ❤️ <span id="statHP">100</span><br>
+      💎 <span id="statGems">0</span><br>
+      ⭐ <span id="statXP">0</span><br>
+      📍 <span id="statPos">1,1</span>
+    </div>
+    <div id="act-btns">
+      <button class="abtn A" id="btnA">✦</button>
+      <button class="abtn B" id="btnB">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal">
+  <div id="mbox">
+    <div id="mtitle"></div>
+    <div id="mbody"></div>
+    <div id="mbtns"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════
+//  SULTAN-47 • HIDDENEAGLE46 • GITHUB PAGES EDITION
+//  Single-file, self-contained, touch-only Android
+// ═══════════════════════════════════════════════════
+
+// ── CASCADE ALGEBRA ──────────────────────────────────
+const CA = {
+  cascade(...ops){
+    if(!ops.length) return 0;
+    let a = ops[0];
+    for(let i=1;i<ops.length;i++){
+      if(ops[i]===0) continue;
+      if(a===0&&i>1) return 0;
+      a = a + a*ops[i];
+    }
+    return a;
+  },
+  bits(n){ let c=0,v=Math.abs(n)>>>0; while(v){c+=v&1;v>>>=1} return c; },
+  even(n){ return this.bits(n)%2===0; },
+  fold(n){
+    if(n<0) return this.fold(-n);
+    if(this.even(n)) return n;
+    const comp=(~n)&0xFF;
+    for(const c of [n^comp, n^(n&0x0F), (n+comp)&0xFF])
+      if(this.even(c)) return c;
+    const r=((n<<1)|(n>>7))&0xFF;
+    return this.even(r)?r:r^1;
+  },
+  qb4i(n){
+    const b=(n&0xFF).toString(2).padStart(8,'0');
+    const m={'00':'p','01':'d','10':'b','11':'q'};
+    return [b.slice(0,2),b.slice(2,4),b.slice(4,6),b.slice(6,8)].map(p=>m[p]).join('');
+  },
+  collide(a,b){ return this.fold(this.cascade(a,b)); }
+};
+
+// ── LEVEL THEMES ─────────────────────────────────────
+const THEMES = {
+  1:  {n:'CHROMATIC', w:['⬜','⬛','🟥'], f:['🟪','⬛','⬜']},
+  2:  {n:'CRIMSON',   w:['⬛','🟥','🟧'], f:['⬜','🟦','🟪']},
+  3:  {n:'SUNSET',    w:['🟧','🟨','🟩'], f:['⬜','🟦','⬛']},
+  4:  {n:'TUNDRA',    w:['🟦','⬜','⬛'], f:['🟧','🟩','🟨']},
+  5:  {n:'TWILIGHT',  w:['🟦','🟪','⬜'], f:['⬛','🟥','🟧']},
+  6:  {n:'VOID',      w:['🟪','⬛','⬜'], f:['⬜','🟥','⬛']},
+  7:  {n:'SYNTH',     w:['🎚️','🎹','🎞️'], f:['🏜️','🌄','🌅']},
+  8:  {n:'TRAFFIC',   w:['🚥','🚦','🥅'], f:['🌫️','🌠','🌌']},
+  9:  {n:'ELEMENTAL', w:['🔥','❄️','🌀'], f:['🛣️','🗾','🌇']},
+  10: {n:'CELESTIAL', w:['⭐','🪨','🍀'], f:['🎆','🎇','🎑']},
+};
+
+const WW=32, WH=24, TS=40; // world width/height, tile size px
+
+// ── STATE ─────────────────────────────────────────────
+let state = {
+  mode:     'build',
+  level:    1,
+  grid:     null,
+  tile:     null,     // currently selected tile emoji
+  camX:     0, camY: 0,  // camera offset in px
+  px:       1, py: 1,    // player position in tiles
+  hp:       100,
+  xp:       0,
+  gems:     0,
+  painting: false,
+  frames:   0,
+  fps:      60,
+  lastFps:  performance.now(),
+  fpsCount: 0,
+};
+
+// ── CANVAS ────────────────────────────────────────────
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+let DPR      = window.devicePixelRatio || 1;
+let CW, CH;  // logical canvas size
+
+function resizeCanvas(){
+  DPR = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  CW = rect.width;
+  CH = rect.height;
+  canvas.width  = CW * DPR;
+  canvas.height = CH * DPR;
+  ctx.scale(DPR, DPR);
+}
+
+// ── GRID HELPERS ──────────────────────────────────────
+function blankGrid(lvl){
+  const t = THEMES[lvl];
+  return Array.from({length:WH},()=>Array(WW).fill(t.f[0]));
+}
+
+function loadGrid(lvl){
+  const saved = localStorage.getItem(`s47_grid_${lvl}`);
+  if(saved){ try{ return JSON.parse(saved); }catch(e){} }
+  return blankGrid(lvl);
+}
+
+function saveGrid(lvl, grid){
+  localStorage.setItem(`s47_grid_${lvl}`, JSON.stringify(grid));
+}
+
+function getTile(x,y){
+  if(x<0||y<0||x>=WW||y>=WH) return null;
+  return state.grid[y][x];
+}
+
+function setTile(x,y,em){
+  if(x<0||y<0||x>=WW||y>=WH) return;
+  state.grid[y][x] = em;
+}
+
+function isWall(lvl, tile){
+  return tile && THEMES[lvl].w.includes(tile);
+}
+
+// ── RENDER ────────────────────────────────────────────
+function render(){
+  ctx.clearRect(0,0,CW,CH);
+
+  // BG
+  ctx.fillStyle = '#000500';
+  ctx.fillRect(0,0,CW,CH);
+
+  const t = THEMES[state.level];
+  const camX = state.camX, camY = state.camY;
+
+  // Visible tile range
+  const x0 = Math.max(0, Math.floor(camX/TS));
+  const y0 = Math.max(0, Math.floor(camY/TS));
+  const x1 = Math.min(WW-1, Math.ceil((camX+CW)/TS));
+  const y1 = Math.min(WH-1, Math.ceil((camY+CH)/TS));
+
+  // Tiles
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font         = `${TS-2}px system-ui,sans-serif`;
+
+  for(let ty=y0;ty<=y1;ty++){
+    for(let tx=x0;tx<=x1;tx++){
+      const em  = state.grid[ty][tx];
+      const sx  = tx*TS - camX + TS/2;
+      const sy  = ty*TS - camY + TS/2;
+      ctx.fillText(em, sx, sy);
+    }
+  }
+
+  // Grid lines (build mode)
+  if(state.mode==='build'){
+    ctx.strokeStyle = 'rgba(0,255,0,0.07)';
+    ctx.lineWidth   = 0.5;
+    for(let tx=x0;tx<=x1+1;tx++){
+      const sx = tx*TS - camX;
+      ctx.beginPath(); ctx.moveTo(sx,0); ctx.lineTo(sx,CH); ctx.stroke();
+    }
+    for(let ty=y0;ty<=y1+1;ty++){
+      const sy = ty*TS - camY;
+      ctx.beginPath(); ctx.moveTo(0,sy); ctx.lineTo(CW,sy); ctx.stroke();
+    }
+    // Selected tile cursor highlight
+    if(state.tile){
+      ctx.strokeStyle = 'rgba(0,255,0,0.6)';
+      ctx.lineWidth = 1.5;
+      ctx.font = `10px 'Courier New',monospace`;
+      ctx.fillStyle = 'rgba(0,255,0,0.7)';
+      ctx.textAlign = 'left';
+      ctx.fillText(`TILE: ${state.tile}  CAM: ${Math.floor(camX/TS)},${Math.floor(camY/TS)}`, 8, CH-8);
+    }
+  }
+
+  // Player (play mode)
+  if(state.mode==='play'){
+    const px = state.px*TS - camX + TS/2;
+    const py = state.py*TS - camY + TS/2;
+    const pulse = 10 + 4*Math.sin(state.frames*0.1);
+    ctx.shadowColor = '#0f0';
+    ctx.shadowBlur  = pulse;
+    ctx.font        = `${TS-2}px system-ui,sans-serif`;
+    ctx.textAlign   = 'center';
+    ctx.textBaseline= 'middle';
+    ctx.fillText('🧑', px, py);
+    ctx.shadowBlur  = 0;
+  }
+
+  // Scanline
+  ctx.fillStyle = 'rgba(0,0,0,0.05)';
+  const scanY = (state.frames*3)%CH;
+  ctx.fillRect(0, scanY, CW, 2);
+
+  // FPS
+  state.fpsCount++;
+  const now = performance.now();
+  if(now - state.lastFps >= 1000){
+    state.fps = state.fpsCount;
+    state.fpsCount = 0;
+    state.lastFps = now;
+  }
+  state.frames++;
+
+  updateHUD();
+  requestAnimationFrame(render);
+}
+
+// ── HUD ───────────────────────────────────────────────
+function updateHUD(){
+  document.getElementById('lvlNum').textContent  = state.level;
+  document.getElementById('xpNum').textContent   = state.xp;
+  document.getElementById('fpsNum').textContent  = state.fps;
+  document.getElementById('hpNum').textContent   = state.hp;
+  document.getElementById('statHP').textContent  = state.hp;
+  document.getElementById('statGems').textContent= state.gems;
+  document.getElementById('statXP').textContent  = state.xp;
+  document.getElementById('statPos').textContent = `${state.px},${state.py}`;
+}
+
+// ── TOUCH (BUILD MODE PAINTING) ──────────────────────
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  if(state.mode !== 'build') return;
+  state.painting = true;
+  paintAt(e.touches[0]);
+}, {passive:false});
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if(state.mode !== 'build' || !state.painting) return;
+  paintAt(e.touches[0]);
+}, {passive:false});
+
+canvas.addEventListener('touchend', e => {
+  e.preventDefault();
+  state.painting = false;
+}, {passive:false});
+
+canvas.addEventListener('touchcancel', e => {
+  e.preventDefault();
+  state.painting = false;
+}, {passive:false});
+
+function paintAt(touch){
+  if(!state.tile) return;
+  const rect = canvas.getBoundingClientRect();
+  const sx   = touch.clientX - rect.left;
+  const sy   = touch.clientY - rect.top;
+  const tx   = Math.floor((sx + state.camX) / TS);
+  const ty   = Math.floor((sy + state.camY) / TS);
+  setTile(tx, ty, state.tile);
+}
+
+// ── PLAYER MOVEMENT ───────────────────────────────────
+function movePlayer(dx, dy){
+  if(state.mode !== 'play') return;
+  const nx = state.px + dx;
+  const ny = state.py + dy;
+  if(nx<0||ny<0||nx>=WW||ny>=WH) return;
+
+  const tile = getTile(nx, ny);
+  if(isWall(state.level, tile)){
+    showToast('🚫');
+    return;
+  }
+
+  state.px = nx;
+  state.py = ny;
+
+  // XP gain via cascade
+  const newXP = CA.fold(CA.cascade(state.xp, 1));
+  state.xp    = newXP;
+
+  // Collectibles
+  if(tile === '💎'||tile === '🪙'||tile === '💰'||tile === '🏆'){
+    state.gems += tile==='🏆'?10:tile==='💰'?5:1;
+    state.xp   += 10;
+    setTile(nx, ny, THEMES[state.level].f[0]);
+    showToast(`💎 +${tile==='🏆'?10:tile==='💰'?5:1} GEM`);
+  }
+  if(tile==='❤️'||tile==='🍎'||tile==='💊'){
+    state.hp = Math.min(100, state.hp + (tile==='💊'?20:10));
+    setTile(nx, ny, THEMES[state.level].f[0]);
+    showToast('❤️ HEALED');
+  }
+  if(tile==='⭐'||tile==='🌟'){
+    state.xp += 25;
+    setTile(nx, ny, THEMES[state.level].f[0]);
+    showToast('⭐ +25 XP');
+  }
+
+  // Hazards
+  if(['🔥','⚡','☠️','💀','🕳️'].includes(tile)){
+    state.hp = Math.max(0, state.hp - 10);
+    showToast(`💥 -10 HP`);
+    if(state.hp <= 0) gameOver();
+  }
+
+  // Camera follow
+  centerCamera();
+}
+
+function centerCamera(){
+  const targetX = state.px*TS - CW/2 + TS/2;
+  const targetY = state.py*TS - CH/2 + TS/2;
+  state.camX += (targetX - state.camX) * 0.18;
+  state.camY += (targetY - state.camY) * 0.18;
+  state.camX = Math.max(0, Math.min(WW*TS - CW, state.camX));
+  state.camY = Math.max(0, Math.min(WH*TS - CH, state.camY));
+}
+
+function gameOver(){
+  showModal('☠️ GAME OVER',
+    `You ran out of HP!\nGems: ${state.gems}  XP: ${state.xp}`,
+    [{l:'🔄 RETRY', fn:()=>{ resetPlayer(); closeModal(); }},
+     {l:'✏️ EDIT',  fn:()=>{ closeModal(); switchMode('build'); }}]
+  );
+}
+
+function resetPlayer(){
+  state.px=1; state.py=1;
+  state.hp=100; state.xp=0; state.gems=0;
+  state.camX=0; state.camY=0;
+}
+
+// ── D-PAD WIRING ─────────────────────────────────────
+function bindDpad(id, dx, dy){
+  const el = document.getElementById(id);
+  let rep = null, hold = null;
+  const start = e => {
+    e.preventDefault();
+    movePlayer(dx, dy);
+    hold = setTimeout(()=>{ rep=setInterval(()=>movePlayer(dx,dy),110); }, 280);
+  };
+  const stop = e => {
+    e.preventDefault();
+    clearTimeout(hold); clearInterval(rep);
+  };
+  el.addEventListener('touchstart', start, {passive:false});
+  el.addEventListener('touchend',   stop,  {passive:false});
+  el.addEventListener('touchcancel',stop,  {passive:false});
+  el.addEventListener('touchleave', stop,  {passive:false});
+}
+
+bindDpad('dU', 0,-1);
+bindDpad('dD', 0, 1);
+bindDpad('dL',-1, 0);
+bindDpad('dR', 1, 0);
+
+document.getElementById('dC').addEventListener('touchstart', e=>{
+  e.preventDefault();
+  resetPlayer();
+}, {passive:false});
+
+document.getElementById('btnA').addEventListener('touchstart', e=>{
+  e.preventDefault();
+  // Inspect adjacent tiles
+  const dirs=[[0,-1],[0,1],[-1,0],[1,0]];
+  for(const [dx,dy] of dirs){
+    const t=getTile(state.px+dx,state.py+dy);
+    if(t && ['🧙','📜','💬','❗','❓'].includes(t)){
+      showModal('🔍 INSPECT', `You examine the area.\nTile: ${t}`, [{l:'OK',fn:closeModal}]);
+      return;
+    }
+  }
+  showToast('🔍 Nothing nearby');
+}, {passive:false});
+
+document.getElementById('btnB').addEventListener('touchstart', e=>{
+  e.preventDefault();
+  showModal('⚙️ STATUS',
+    `❤️ HP: ${state.hp}/100\n💎 GEMS: ${state.gems}\n⭐ XP: ${state.xp}\n📍 POS: ${state.px},${state.py}\n\nCASCADE: ${CA.qb4i(CA.fold(state.xp))}`,
+    [{l:'CONTINUE',fn:closeModal},
+     {l:'EXIT',fn:()=>{closeModal();switchMode('build');}}]
+  );
+}, {passive:false});
+
+// ── MODE SWITCH ───────────────────────────────────────
+function switchMode(mode){
+  state.mode = mode;
+
+  document.querySelectorAll('.tab').forEach(t=>{
+    t.classList.toggle('on', t.dataset.mode===mode);
+  });
+
+  document.getElementById('buildPanel').style.display = mode==='build'?'flex':'none';
+  document.getElementById('playPanel').style.display  = mode==='play' ?'flex':'none';
+
+  if(mode==='play'){
+    state.px=1; state.py=1;
+    state.hp=100;
+    state.camX=0; state.camY=0;
+    showToast('▶ PLAYING LVL ' + state.level);
+  }
+}
+
+document.querySelectorAll('.tab').forEach(btn=>{
+  btn.addEventListener('touchstart', e=>{
+    e.preventDefault();
+    switchMode(btn.dataset.mode);
+  }, {passive:false});
+});
+
+// ── LEVEL THEME SELECTOR ─────────────────────────────
+function buildThemes(){
+  const el = document.getElementById('themes');
+  el.innerHTML='';
+  for(let i=1;i<=10;i++){
+    const btn = document.createElement('button');
+    btn.className = 'theme-btn' + (i===state.level?' on':'');
+    btn.textContent = i;
+    btn.title = THEMES[i].n;
+    btn.addEventListener('touchstart', ev=>{
+      ev.preventDefault();
+      switchLevel(i);
+    }, {passive:false});
+    el.appendChild(btn);
+  }
+}
+
+function switchLevel(n){
+  // Save current before switching
+  saveGrid(state.level, state.grid);
+  state.level = n;
+  state.grid  = loadGrid(n);
+  state.tile  = THEMES[n].w[0];
+  state.camX  = 0; state.camY = 0;
+  buildThemes();
+  buildTiles();
+  showToast('LEVEL ' + n + ': ' + THEMES[n].n);
+}
+
+// ── TILE PALETTE ──────────────────────────────────────
+function buildTiles(){
+  const theme = THEMES[state.level];
+  const all   = [...theme.w, ...theme.f];
+  const el    = document.getElementById('tiles');
+  el.innerHTML='';
+  all.forEach(em=>{
+    const btn = document.createElement('div');
+    btn.className = 'tile-btn' + (em===state.tile?' on':'');
+    btn.textContent = em;
+    btn.addEventListener('touchstart', ev=>{
+      ev.preventDefault();
+      state.tile = em;
+      buildTiles();
+    }, {passive:false});
+    el.appendChild(btn);
+  });
+}
+
+// ── BUILD ACTIONS ─────────────────────────────────────
+document.getElementById('saveBtn').addEventListener('touchstart', e=>{
+  e.preventDefault();
+  saveGrid(state.level, state.grid);
+  showToast('💾 SAVED');
+}, {passive:false});
+
+document.getElementById('genBtn').addEventListener('touchstart', e=>{
+  e.preventDefault();
+  // Cascade-seeded procedural level
+  const seed = Date.now() % 255;
+  const t    = THEMES[state.level];
+  for(let y=0;y<WH;y++){
+    for(let x=0;x<WW;x++){
+      const v = CA.fold(CA.cascade(seed,x,y));
+      const isW = v%4===0;
+      state.grid[y][x] = isW ? t.w[v%t.w.length] : t.f[v%t.f.length];
+    }
+  }
+  // Clear spawn area
+  for(let dy=0;dy<3;dy++) for(let dx=0;dx<3;dx++) state.grid[1+dy][1+dx]=t.f[0];
+  showToast('⚡ SEEDED via CASCADE');
+}, {passive:false});
+
+document.getElementById('clearBtn').addEventListener('touchstart', e=>{
+  e.preventDefault();
+  showModal('🗑️ CLEAR?', 'Erase this level?\nCannot be undone.', [
+    {l:'CLEAR', fn:()=>{ state.grid=blankGrid(state.level); closeModal(); }},
+    {l:'CANCEL', fn:closeModal, sec:true},
+  ]);
+}, {passive:false});
+
+// Camera scroll: two-finger drag on canvas
+let panStart = null, camStart = null;
+canvas.addEventListener('touchstart', e=>{
+  if(e.touches.length===2 && state.mode==='build'){
+    panStart  = {x:(e.touches[0].clientX+e.touches[1].clientX)/2,
+                 y:(e.touches[0].clientY+e.touches[1].clientY)/2};
+    camStart  = {x:state.camX, y:state.camY};
+    state.painting = false;
+  }
+}, {passive:false});
+
+canvas.addEventListener('touchmove', e=>{
+  if(e.touches.length===2 && panStart && state.mode==='build'){
+    e.preventDefault();
+    const mx = (e.touches[0].clientX+e.touches[1].clientX)/2;
+    const my = (e.touches[0].clientY+e.touches[1].clientY)/2;
+    state.camX = Math.max(0, Math.min(WW*TS-CW, camStart.x-(mx-panStart.x)));
+    state.camY = Math.max(0, Math.min(WH*TS-CH, camStart.y-(my-panStart.y)));
+  }
+}, {passive:false});
+
+canvas.addEventListener('touchend', e=>{
+  if(e.touches.length<2) panStart=null;
+}, {passive:false});
+
+// ── MODAL ─────────────────────────────────────────────
+function showModal(title, body, btns=[]){
+  document.getElementById('mtitle').textContent = title;
+  document.getElementById('mbody').textContent  = body;
+  const bc = document.getElementById('mbtns');
+  bc.innerHTML='';
+  btns.forEach(b=>{
+    const btn = document.createElement('button');
+    btn.className = 'mbtn' + (b.sec?' sec':'');
+    btn.textContent = b.l;
+    btn.addEventListener('touchstart', ev=>{
+      ev.preventDefault();
+      b.fn && b.fn();
+    }, {passive:false});
+    bc.appendChild(btn);
+  });
+  document.getElementById('modal').classList.add('show');
+}
+
+function closeModal(){
+  document.getElementById('modal').classList.remove('show');
+}
+
+document.getElementById('modal').addEventListener('touchstart', e=>{
+  if(e.target===document.getElementById('modal')) closeModal();
+}, {passive:false});
+
+// ── TOAST ─────────────────────────────────────────────
+let toastT=null;
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;
+  t.classList.add('show');
+  clearTimeout(toastT);
+  toastT=setTimeout(()=>t.classList.remove('show'),1600);
+}
+
+// ── PWA INSTALL ───────────────────────────────────────
+let installPrompt = null;
+
+window.addEventListener('beforeinstallprompt', e=>{
+  e.preventDefault();
+  installPrompt = e;
+  document.getElementById('installBanner').classList.add('show');
+});
+
+document.getElementById('installBtn').addEventListener('touchstart', e=>{
+  e.preventDefault();
+  if(!installPrompt) return;
+  installPrompt.prompt();
+  installPrompt.userChoice.then(r=>{
+    if(r.outcome==='accepted') showToast('✅ INSTALLED!');
+    installPrompt=null;
+    document.getElementById('installBanner').classList.remove('show');
+  });
+}, {passive:false});
+
+document.getElementById('dismissInstall').addEventListener('touchstart', e=>{
+  e.preventDefault();
+  document.getElementById('installBanner').classList.remove('show');
+}, {passive:false});
+
+window.addEventListener('appinstalled',()=>{
+  showToast('✅ APP INSTALLED');
+  document.getElementById('installBanner').classList.remove('show');
+});
+
+// ── SERVICE WORKER ────────────────────────────────────
+if('serviceWorker' in navigator){
+  window.addEventListener('load',()=>{
+    navigator.serviceWorker.register('./sw.js').then(r=>{
+      console.log('[SW] registered scope:', r.scope);
+    }).catch(e=>{
+      console.warn('[SW] failed:', e.message);
+    });
+  });
+}
+
+// ── RESIZE ────────────────────────────────────────────
+window.addEventListener('resize',()=>{
+  setTimeout(()=>{ resizeCanvas(); },100);
+});
+
+// ── INIT ──────────────────────────────────────────────
+function init(){
+  resizeCanvas();
+  state.grid  = loadGrid(state.level);
+  state.tile  = THEMES[state.level].w[0];
+  buildThemes();
+  buildTiles();
+  switchMode('build');
+  showToast('SULTAN-47 ONLINE');
+  requestAnimationFrame(render);
+}
+
+window.addEventListener('load', init);
+</script>
+</body>
+</html>
