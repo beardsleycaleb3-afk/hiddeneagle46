@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#00ff00">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="./manifest.json">
+<title>SULTAN-47</title>
+<style>
+:root{--neon:#0f0;--bg:#000500;--dim:rgba(0,18,0,.96);--bdr:rgba(0,255,0,.3)}
+*{margin:0;padding:0;box-sizing:border-box;
+  -webkit-user-select:none;user-select:none;
+  -webkit-touch-callout:none;tap-highlight-color:transparent}
+html,body{
+  width:100%;height:100vh;height:100dvh;
+  overflow:hidden;background:#000;
+  color:var(--neon);font-family:'Courier New',monospace;
+  display:flex;flex-direction:column;align-items:center;
+}
+/* scanlines */
+body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:900;
+  background:repeating-linear-gradient(0deg,
+    rgba(0,255,0,.04) 0,rgba(0,255,0,.04) 1px,
+    transparent 1px,transparent 2px)}
+
+/* ── HUD ── */
+#hud{
+  width:350px;height:38px;flex-shrink:0;
+  background:var(--dim);border-bottom:1px solid var(--bdr);
+  display:grid;grid-template-columns:1fr auto 1fr;
+  align-items:center;padding:0 8px;font-size:9px;
+  text-shadow:0 0 5px rgba(0,255,0,.6);
+}
+#hud-c{font-weight:bold;font-size:10px;letter-spacing:2px;text-align:center}
+#hud-r{text-align:right;line-height:1.35}
+#hud-l{line-height:1.35}
+
+/* ── MONITOR SHELL ── */
+#monitor-shell{
+  width:350px;height:350px;flex-shrink:0;position:relative;
+  border:2px solid rgba(0,255,0,.5);
+  box-shadow:0 0 18px rgba(0,255,0,.2),inset 0 0 8px rgba(0,0,0,.8);
+  background:#000500;
+}
+/* Canvas fills the shell exactly */
+#c{
+  position:absolute;top:0;left:0;
+  width:350px;height:350px;
+  display:block;touch-action:none;
+}
+/* SCROLL HINT overlay - shows current viewport position */
+#vp-info{
+  position:absolute;bottom:3px;right:4px;
+  font-size:7px;color:rgba(0,255,0,.45);
+  pointer-events:none;letter-spacing:.5px;
+}
+
+/* ── BOTTOM PANEL ── */
+#panel{
+  width:350px;flex:1;overflow-y:auto;overflow-x:hidden;
+  background:var(--dim);border-top:1px solid var(--bdr);
+  display:flex;flex-direction:column;
+  -webkit-overflow-scrolling:touch;
+}
+#panel::-webkit-scrollbar{display:none}
+
+/* TABS */
+#tabs{display:flex;border-bottom:1px solid var(--bdr);flex-shrink:0}
+.tab{flex:1;height:34px;background:transparent;border:none;border-bottom:2px solid transparent;
+  color:var(--neon);font:bold 10px 'Courier New',monospace;
+  text-transform:uppercase;letter-spacing:1px;cursor:pointer;touch-action:manipulation}
+.tab.on{background:rgba(0,255,0,.1);border-bottom-color:var(--neon)}
+
+/* BUILD UI */
+#buildUI{display:flex;flex-direction:column;flex-shrink:0}
+/* Theme strip */
+#themeStrip{display:flex;gap:4px;padding:5px 6px;overflow-x:auto;flex-shrink:0;
+  border-bottom:1px solid rgba(0,255,0,.15);touch-action:pan-x;scrollbar-width:none}
+#themeStrip::-webkit-scrollbar{display:none}
+.th{min-width:30px;height:26px;background:transparent;border:1px solid var(--bdr);
+  color:var(--neon);font:bold 9px 'Courier New',monospace;cursor:pointer;
+  touch-action:manipulation;flex-shrink:0}
+.th.on{background:var(--neon);color:#000;border-color:var(--neon)}
+/* Palette strip */
+#palStrip{display:flex;gap:3px;padding:5px 6px;overflow-x:auto;flex-shrink:0;
+  border-bottom:1px solid rgba(0,255,0,.15);touch-action:pan-x;scrollbar-width:none;
+  align-items:center}
+#palStrip::-webkit-scrollbar{display:none}
+.pal{width:36px;height:36px;flex-shrink:0;font-size:20px;
+  background:rgba(0,255,0,.04);border:1.5px solid var(--bdr);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;touch-action:manipulation}
+.pal.on{border-color:var(--neon);background:rgba(0,255,0,.15)}
+/* Tool row */
+#toolRow{display:flex;gap:4px;padding:5px 6px;flex-shrink:0}
+.tbtn{flex:1;height:30px;font:bold 9px 'Courier New',monospace;cursor:pointer;
+  text-transform:uppercase;touch-action:manipulation;border:none}
+.tbtn.pri{background:var(--neon);color:#000}
+.tbtn.sec{background:transparent;color:var(--neon);border:1px solid var(--bdr)}
+.tbtn:active{opacity:.7}
+/* Scroll nav */
+#navRow{display:grid;grid-template-columns:repeat(5,1fr);gap:3px;padding:4px 6px;flex-shrink:0}
+.nbtn{height:28px;background:rgba(0,255,0,.08);border:1px solid var(--bdr);
+  color:var(--neon);font-size:13px;cursor:pointer;touch-action:manipulation}
+.nbtn:active{background:var(--neon);color:#000}
+
+/* PLAY UI */
+#playUI{display:none;flex-direction:row;align-items:center;
+  justify-content:space-around;padding:8px 10px;flex:1}
+/* Dpad */
+#dpad{display:grid;grid-template-columns:repeat(3,46px);
+  grid-template-rows:repeat(3,46px);gap:5px}
+.dp{width:46px;height:46px;background:var(--neon);color:#000;border:none;
+  font-size:17px;font-weight:bold;display:flex;align-items:center;
+  justify-content:center;cursor:pointer;border-radius:5px;touch-action:manipulation}
+.dp:active{opacity:.7;transform:scale(.9)}
+.dp.mid{background:transparent;color:var(--neon);border:1px solid var(--bdr);font-size:13px}
+.dp.emp{background:transparent;pointer-events:none}
+/* stats */
+#stats{font-size:9px;line-height:1.9;text-align:center;
+  text-shadow:0 0 5px rgba(0,255,0,.5)}
+/* action btns */
+#acts{display:flex;flex-direction:column;gap:10px;align-items:center}
+.abtn{width:46px;height:46px;border-radius:50%;border:none;
+  font-size:15px;font-weight:bold;cursor:pointer;touch-action:manipulation;
+  display:flex;align-items:center;justify-content:center}
+.abtn:active{opacity:.7;transform:scale(.88)}
+.abtn.A{background:#0a5;color:#fff}
+.abtn.B{background:#a00;color:#fff}
+
+/* MODAL */
+#modal{position:fixed;inset:0;background:rgba(0,0,0,.88);
+  display:none;align-items:center;justify-content:center;z-index:200}
+#modal.show{display:flex}
+#mbox{background:#050f05;border:2px solid var(--neon);padding:16px;
+  width:min(86vw,310px);box-shadow:0 0 20px rgba(0,255,0,.25)}
+#mt{font-weight:bold;font-size:12px;letter-spacing:1px;margin-bottom:8px;text-transform:uppercase}
+#mb{font-size:10px;line-height:1.65;margin-bottom:12px;white-space:pre-line;opacity:.85}
+#mbs{display:flex;gap:7px}
+.mbtn{flex:1;min-height:38px;font:bold 10px 'Courier New',monospace;
+  cursor:pointer;border:1px solid var(--neon);background:var(--neon);
+  color:#000;text-transform:uppercase;touch-action:manipulation}
+.mbtn.sec{background:transparent;color:var(--neon)}
+
+/* TOAST */
+#toast{position:fixed;bottom:8px;left:50%;transform:translateX(-50%);
+  background:rgba(0,25,0,.97);border:1px solid var(--neon);color:var(--neon);
+  padding:5px 14px;font-size:10px;letter-spacing:1px;z-index:300;
+  opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+#toast.on{opacity:1}
+
+/* INSTALL */
+#ibanner{position:fixed;top:38px;left:0;right:0;background:rgba(0,55,0,.97);
+  border-bottom:1px solid var(--neon);padding:7px 10px;
+  display:none;align-items:center;justify-content:space-between;z-index:100;gap:8px}
+#ibanner.on{display:flex}
+#ibanner span{font-size:9px;line-height:1.4}
+.ibtn{min-height:28px;padding:0 10px;background:var(--neon);color:#000;border:none;
+  font:bold 9px 'Courier New',monospace;cursor:pointer;touch-action:manipulation;white-space:nowrap}
+.ibtn.sec{background:transparent;color:var(--neon);border:1px solid var(--bdr)}
+</style>
+</head>
+<body>
+
+<!-- HUD -->
+<div id="hud">
+  <div id="hud-l">LV:<span id="hLv">1</span> HP:<span id="hHp">100</span></div>
+  <div id="hud-c">▄█▀ SULTAN-47</div>
+  <div id="hud-r">FPS:<span id="hFps">60</span><br>XP:<span id="hXp">0</span></div>
+</div>
+
+<!-- INSTALL BANNER -->
+<div id="ibanner">
+  <span>📲 Install Sultan-47</span>
+  <button class="ibtn" id="iBtn">INSTALL</button>
+  <button class="ibtn sec" id="iX">✕</button>
+</div>
+
+<!-- MONITOR SHELL (350×350) -->
+<div id="monitor-shell">
+  <canvas id="c"></canvas>
+  <div id="vp-info"></div>
+</div>
+
+<!-- BOTTOM PANEL -->
+<div id="panel">
+  <div id="tabs">
+    <button class="tab on" data-mode="build">✏️ BUILD</button>
+    <button class="tab"    data-mode="play" >▶️ PLAY</button>
+  </div>
+
+  <!-- BUILD UI -->
+  <div id="buildUI">
+    <div id="themeStrip"></div>
+    <div id="palStrip"></div>
+    <div id="toolRow">
+      <button class="tbtn pri" id="saveBtn">💾 SAVE</button>
+      <button class="tbtn sec" id="seedBtn">⚡ SEED</button>
+      <button class="tbtn sec" id="clearBtn">🗑️ CLR</button>
+    </div>
+    <!-- Viewport scroll nav for BUILD mode -->
+    <div id="navRow">
+      <button class="nbtn" id="nUL">↖</button>
+      <button class="nbtn" id="nU">▲</button>
+      <button class="nbtn" id="nUR">↗</button>
+      <button class="nbtn" id="nL">◄</button>
+      <button class="nbtn" id="nHome">⌂</button>
+      <button class="nbtn" id="nR">►</button>
+      <button class="nbtn" id="nDL">↙</button>
+      <button class="nbtn" id="nD">▼</button>
+      <button class="nbtn" id="nDR">↘</button>
+      <button class="nbtn" id="nFull">⊞</button><!-- toggle full view -->
+    </div>
+  </div>
+
+  <!-- PLAY UI -->
+  <div id="playUI">
+    <div id="dpad">
+      <div class="dp emp"></div>
+      <button class="dp" id="dU">▲</button>
+      <div class="dp emp"></div>
+      <button class="dp" id="dL">◄</button>
+      <button class="dp mid" id="dC">↺</button>
+      <button class="dp" id="dR">►</button>
+      <div class="dp emp"></div>
+      <button class="dp" id="dD">▼</button>
+      <div class="dp emp"></div>
+    </div>
+    <div id="stats">
+      ❤️<span id="sHp">100</span><br>
+      💎<span id="sGems">0</span><br>
+      ⭐<span id="sXp">0</span><br>
+      🗺<span id="sPos">1,1</span>
+    </div>
+    <div id="acts">
+      <button class="abtn A" id="btnA">✦</button>
+      <button class="abtn B" id="btnB">✕</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div id="modal">
+  <div id="mbox">
+    <div id="mt"></div>
+    <div id="mb"></div>
+    <div id="mbs"></div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+'use strict';
+// ═══════════════════════════════════════════════════════════
+//  SULTAN-47 • HIDDENEAGLE46
+//  350×350 monitor | 32×30 full world | 16×16 tile viewport
+// ═══════════════════════════════════════════════════════════
+
+// ── CASCADE ALGEBRA ────────────────────────────────────────
+const CA = {
+  cascade(...ops) {
+    if (!ops.length) return 0;
+    let a = ops[0];
+    for (let i = 1; i < ops.length; i++) {
+      if (ops[i] === 0) continue;
+      if (a === 0 && i > 1) return 0;
+      a = a + a * ops[i];
+    }
+    return a;
+  },
+  bits(n)  { let c=0,v=Math.abs(n)>>>0; while(v){c+=v&1;v>>>=1} return c; },
+  even(n)  { return this.bits(n)%2===0; },
+  fold(n)  {
+    if (n<0) return this.fold(-n);
+    if (this.even(n)) return n;
+    const co=(~n)&0xFF;
+    for (const c of [n^co, n^(n&0x0F), (n+co)&0xFF])
+      if (this.even(c)) return c;
+    const r=((n<<1)|(n>>7))&0xFF;
+    return this.even(r)?r:r^1;
+  },
+  qb4i(n)  {
+    const b=(n&0xFF).toString(2).padStart(8,'0');
+    const m={'00':'p','01':'d','10':'b','11':'q'};
+    return [b.slice(0,2),b.slice(2,4),b.slice(4,6),b.slice(6,8)].map(p=>m[p]).join('');
+  },
+};
+
+// ── LEVEL THEMES ───────────────────────────────────────────
+const THEMES = {
+  1:  {n:'CHROMATIC', w:['⬜','⬛','🟥'],    f:['🟪','⬛','⬜']},
+  2:  {n:'CRIMSON',   w:['⬛','🟥','🟧'],    f:['⬜','🟦','🟪']},
+  3:  {n:'SUNSET',    w:['🟧','🟨','🟩'],    f:['⬜','🟦','⬛']},
+  4:  {n:'TUNDRA',    w:['🟦','⬜','⬛'],    f:['🟧','🟩','🟨']},
+  5:  {n:'TWILIGHT',  w:['🟦','🟪','⬜'],    f:['⬛','🟥','🟧']},
+  6:  {n:'VOID',      w:['🟪','⬛','⬜'],    f:['⬜','🟥','⬛']},
+  7:  {n:'SYNTH',     w:['🎚️','🎹','🎞️'],   f:['🏜️','🌄','🌅']},
+  8:  {n:'TRAFFIC',   w:['🚥','🚦','🥅'],    f:['🌫️','🌠','🌌']},
+  9:  {n:'ELEMENTAL', w:['🔥','❄️','🌀'],    f:['🛣️','🗾','🌇']},
+  10: {n:'CELESTIAL', w:['⭐','🪨','🍀'],    f:['🎆','🎇','🎑']},
+};
+
+const COLLECTIBLES = new Set(['💎','🪙','💰','🏆','⭐','🌟','❤️','🍎','💊','🧪']);
+const HAZARDS      = new Set(['🔥','⚡','☠️','💀','🕳️','🌋']);
+
+// ── CORE DIMENSIONS ────────────────────────────────────────
+const MONITOR = 350;  // canvas display size (px)
+const GRID_W  = 32;   // full world width  (tiles)
+const GRID_H  = 30;   // full world height (tiles)
+const VIEW    = 16;   // tiles visible per axis in the 350px monitor
+const TILE    = MONITOR / VIEW;   // = 21.875 px per tile (exact fit)
+
+// clamp helper
+const clamp = (v,lo,hi) => Math.max(lo, Math.min(hi, v));
+
+// ── CANVAS SETUP ───────────────────────────────────────────
+// Fix canvas at exactly MONITOR × MONITOR logical pixels,
+// scaled by DPR for sharpness. All draw calls use logical px.
+const canvas = document.getElementById('c');
+const ctx    = canvas.getContext('2d');
+const DPR    = Math.min(window.devicePixelRatio || 1, 3); // cap at 3x
+
+canvas.width        = MONITOR * DPR;
+canvas.height       = MONITOR * DPR;
+canvas.style.width  = MONITOR + 'px';
+canvas.style.height = MONITOR + 'px';
+ctx.scale(DPR, DPR);
+
+// ── STATE ──────────────────────────────────────────────────
+const S = {
+  mode:     'build',
+  level:    1,
+  grid:     null,
+  tile:     null,       // selected emoji for painting
+  // camera: top-left tile of the visible viewport
+  camX: 0, camY: 0,
+  // camera lerp targets (play mode)
+  tCamX: 0, tCamY: 0,
+  // player position in world tiles
+  px: 2, py: 2,
+  // player stats
+  hp: 100, xp: 0, gems: 0,
+  // full-grid overview toggle (build mode)
+  fullView: false,
+  // render
+  frames: 0, fps: 60, fpsCount: 0, lastFps: performance.now(),
+  // touch painting
+  painting: false,
+  // two-finger pan (build mode)
+  pan2: null, cam2Start: null,
+};
+
+// ── GRID HELPERS ───────────────────────────────────────────
+function blankGrid(lv) {
+  const f = THEMES[lv].f[0];
+  return Array.from({length:GRID_H}, () => Array(GRID_W).fill(f));
+}
+function loadGrid(lv) {
+  try {
+    const s = localStorage.getItem(`s47_${lv}`);
+    if (s) return JSON.parse(s);
+  } catch(e){}
+  return blankGrid(lv);
+}
+function saveGrid(lv) {
+  localStorage.setItem(`s47_${lv}`, JSON.stringify(S.grid));
+}
+function getTile(x, y) {
+  if (x<0||y<0||x>=GRID_W||y>=GRID_H) return null;
+  return S.grid[y][x];
+}
+function putTile(x, y, em) {
+  if (x<0||y<0||x>=GRID_W||y>=GRID_H) return;
+  S.grid[y][x] = em;
+}
+function isWall(t) {
+  return t && THEMES[S.level].w.includes(t);
+}
+
+// ── CAMERA CLAMPING ────────────────────────────────────────
+function clampCam() {
+  S.camX = clamp(Math.round(S.camX), 0, GRID_W - VIEW);
+  S.camY = clamp(Math.round(S.camY), 0, GRID_H - VIEW);
+}
+
+// ── RENDER ─────────────────────────────────────────────────
+function render() {
+  ctx.clearRect(0, 0, MONITOR, MONITOR);
+  ctx.fillStyle = '#000500';
+  ctx.fillRect(0, 0, MONITOR, MONITOR);
+
+  if (S.fullView) {
+    renderFullGrid();
+  } else {
+    renderViewport();
+  }
+
+  // Scanline sweep
+  ctx.fillStyle = 'rgba(0,255,0,0.025)';
+  const sy = ((S.frames * 2) % MONITOR);
+  ctx.fillRect(0, sy, MONITOR, 2);
+
+  // FPS
+  S.fpsCount++;
+  const now = performance.now();
+  if (now - S.lastFps >= 1000) {
+    S.fps = S.fpsCount; S.fpsCount = 0; S.lastFps = now;
+  }
+  S.frames++;
+
+  updateHUD();
+  requestAnimationFrame(render);
+}
+
+// ── RENDER: VIEWPORT (16×16 tiles → 350×350 monitor) ──────
+function renderViewport() {
+  // Lerp camera toward target in play mode
+  if (S.mode === 'play') {
+    S.camX += (S.tCamX - S.camX) * 0.18;
+    S.camY += (S.tCamY - S.camY) * 0.18;
+  }
+
+  // Sub-pixel offset for smooth scrolling
+  const offX = -(S.camX % 1) * TILE;
+  const offY = -(S.camY % 1) * TILE;
+  const tileX0 = Math.floor(S.camX);
+  const tileY0 = Math.floor(S.camY);
+
+  ctx.save();
+  ctx.translate(offX, offY);
+
+  // Draw VIEW+1 tiles in each direction to cover sub-pixel gap
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = `${Math.floor(TILE * 0.82)}px system-ui,sans-serif`;
+
+  for (let row = 0; row <= VIEW; row++) {
+    for (let col = 0; col <= VIEW; col++) {
+      const gx = tileX0 + col;
+      const gy = tileY0 + row;
+      if (gx < 0 || gy < 0 || gx >= GRID_W || gy >= GRID_H) continue;
+      const em = S.grid[gy][gx];
+      ctx.fillText(em,
+        col * TILE + TILE * 0.5,
+        row * TILE + TILE * 0.5
+      );
+    }
+  }
+  ctx.restore();
+
+  // Grid lines (build mode only)
+  if (S.mode === 'build') {
+    ctx.strokeStyle = 'rgba(0,255,0,0.09)';
+    ctx.lineWidth   = 0.5;
+    for (let i = 0; i <= VIEW; i++) {
+      const p = offX + i * TILE;
+      ctx.beginPath(); ctx.moveTo(p, 0); ctx.lineTo(p, MONITOR); ctx.stroke();
+      const q = offY + i * TILE;
+      ctx.beginPath(); ctx.moveTo(0, q); ctx.lineTo(MONITOR, q); ctx.stroke();
+    }
+  }
+
+  // Player (play mode)
+  if (S.mode === 'play') {
+    const screenX = (S.px - S.camX) * TILE + TILE * 0.5;
+    const screenY = (S.py - S.camY) * TILE + TILE * 0.5;
+    const pulse   = 8 + 4 * Math.sin(S.frames * 0.1);
+    ctx.save();
+    ctx.shadowColor = '#0f0';
+    ctx.shadowBlur  = pulse;
+    ctx.font        = `${Math.floor(TILE * 0.88)}px system-ui,sans-serif`;
+    ctx.textAlign   = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText('🧑', screenX, screenY);
+    ctx.restore();
+  }
+
+  // Viewport info overlay
+  document.getElementById('vp-info').textContent =
+    `VP ${Math.floor(S.camX)},${Math.floor(S.camY)}  WLD ${GRID_W}×${GRID_H}`;
+}
+
+// ── RENDER: FULL GRID (32×30 scaled to fit 350×350) ───────
+function renderFullGrid() {
+  // Scale the entire 32×30 world into the 350×350 monitor
+  const tileW = MONITOR / GRID_W;  // 10.9375 px
+  const tileH = MONITOR / GRID_H;  // 11.666 px
+
+  ctx.textAlign    = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font         = `${Math.floor(Math.min(tileW, tileH) * 0.9)}px system-ui,sans-serif`;
+
+  for (let row = 0; row < GRID_H; row++) {
+    for (let col = 0; col < GRID_W; col++) {
+      const em = S.grid[row][col];
+      ctx.fillText(em,
+        col * tileW + tileW * 0.5,
+        row * tileH + tileH * 0.5
+      );
+    }
+  }
+
+  // Player dot on full view
+  ctx.fillStyle   = '#0f0';
+  ctx.shadowColor = '#0f0';
+  ctx.shadowBlur  = 6;
+  ctx.beginPath();
+  ctx.arc(
+    S.px * tileW + tileW * 0.5,
+    S.py * tileH + tileH * 0.5,
+    3, 0, Math.PI * 2
+  );
+  ctx.fill();
+  ctx.shadowBlur = 0;
+
+  // Viewport rect indicator
+  ctx.strokeStyle = 'rgba(0,255,0,0.6)';
+  ctx.lineWidth   = 1;
+  ctx.strokeRect(
+    S.camX * tileW,
+    S.camY * tileH,
+    VIEW   * tileW,
+    VIEW   * tileH
+  );
+
+  document.getElementById('vp-info').textContent =
+    `FULL ${GRID_W}×${GRID_H} OVERVIEW`;
+}
+
+// ── HUD ────────────────────────────────────────────────────
+function updateHUD() {
+  document.getElementById('hLv').textContent   = S.level;
+  document.getElementById('hHp').textContent   = S.hp;
+  document.getElementById('hFps').textContent  = S.fps;
+  document.getElementById('hXp').textContent   = S.xp;
+  document.getElementById('sHp').textContent   = S.hp;
+  document.getElementById('sGems').textContent = S.gems;
+  document.getElementById('sXp').textContent   = S.xp;
+  document.getElementById('sPos').textContent  = `${S.px},${S.py}`;
+}
+
+// ── SCREEN → WORLD TILE COORDS ─────────────────────────────
+function screenToWorld(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const sx = clientX - rect.left;
+  const sy = clientY - rect.top;
+  if (S.fullView) {
+    // map to full grid
+    return {
+      gx: Math.floor(sx / (MONITOR / GRID_W)),
+      gy: Math.floor(sy / (MONITOR / GRID_H)),
+    };
+  }
+  return {
+    gx: Math.floor(S.camX + sx / TILE),
+    gy: Math.floor(S.camY + sy / TILE),
+  };
+}
+
+// ── TOUCH: BUILD MODE PAINTING + 2-FINGER PAN ─────────────
+canvas.addEventListener('touchstart', e => {
+  e.preventDefault();
+  if (S.mode !== 'build') return;
+
+  if (e.touches.length === 2) {
+    // Start 2-finger pan
+    S.painting = false;
+    S.pan2 = {
+      mx: (e.touches[0].clientX + e.touches[1].clientX) / 2,
+      my: (e.touches[0].clientY + e.touches[1].clientY) / 2,
+    };
+    S.cam2Start = { x: S.camX, y: S.camY };
+    return;
+  }
+
+  // Single finger paint
+  S.painting = true;
+  const { gx, gy } = screenToWorld(e.touches[0].clientX, e.touches[0].clientY);
+  if (S.tile) putTile(gx, gy, S.tile);
+}, { passive: false });
+
+canvas.addEventListener('touchmove', e => {
+  e.preventDefault();
+  if (S.mode !== 'build') return;
+
+  if (e.touches.length === 2 && S.pan2) {
+    // 2-finger pan: move camera
+    const mx = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+    const my = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+    const dTileX = (S.pan2.mx - mx) / TILE;
+    const dTileY = (S.pan2.my - my) / TILE;
+    S.camX = S.cam2Start.x + dTileX;
+    S.camY = S.cam2Start.y + dTileY;
+    clampCam();
+    return;
+  }
+
+  if (!S.painting || e.touches.length !== 1) return;
+  const { gx, gy } = screenToWorld(e.touches[0].clientX, e.touches[0].clientY);
+  if (S.tile) putTile(gx, gy, S.tile);
+}, { passive: false });
+
+canvas.addEventListener('touchend',   e => { e.preventDefault(); S.painting=false; S.pan2=null; }, { passive:false });
+canvas.addEventListener('touchcancel',e => { e.preventDefault(); S.painting=false; S.pan2=null; }, { passive:false });
+
+// ── VIEWPORT NAV BUTTONS (BUILD MODE) ─────────────────────
+const NAV_STEP = 4; // tiles per nav button press
+function navPan(dx, dy) {
+  S.camX = clamp(S.camX + dx, 0, GRID_W - VIEW);
+  S.camY = clamp(S.camY + dy, 0, GRID_H - VIEW);
+}
+document.getElementById('nU').addEventListener('touchstart',  e=>{ e.preventDefault(); navPan(0,-NAV_STEP); },{passive:false});
+document.getElementById('nD').addEventListener('touchstart',  e=>{ e.preventDefault(); navPan(0, NAV_STEP); },{passive:false});
+document.getElementById('nL').addEventListener('touchstart',  e=>{ e.preventDefault(); navPan(-NAV_STEP,0); },{passive:false});
+document.getElementById('nR').addEventListener('touchstart',  e=>{ e.preventDefault(); navPan( NAV_STEP,0); },{passive:false});
+document.getElementById('nUL').addEventListener('touchstart', e=>{ e.preventDefault(); navPan(-NAV_STEP,-NAV_STEP); },{passive:false});
+document.getElementById('nUR').addEventListener('touchstart', e=>{ e.preventDefault(); navPan( NAV_STEP,-NAV_STEP); },{passive:false});
+document.getElementById('nDL').addEventListener('touchstart', e=>{ e.preventDefault(); navPan(-NAV_STEP, NAV_STEP); },{passive:false});
+document.getElementById('nDR').addEventListener('touchstart', e=>{ e.preventDefault(); navPan( NAV_STEP, NAV_STEP); },{passive:false});
+document.getElementById('nHome').addEventListener('touchstart',e=>{ e.preventDefault(); S.camX=0; S.camY=0; },{passive:false});
+document.getElementById('nFull').addEventListener('touchstart',e=>{
+  e.preventDefault();
+  S.fullView = !S.fullView;
+  e.currentTarget.textContent = S.fullView ? '⊟' : '⊞';
+  showToast(S.fullView ? '🌍 FULL GRID VIEW' : '🔍 VIEWPORT VIEW');
+},{passive:false});
+
+// ── PLAYER MOVEMENT ────────────────────────────────────────
+function movePlayer(dx, dy) {
+  if (S.mode !== 'play') return;
+  const nx = S.px + dx;
+  const ny = S.py + dy;
+  if (nx < 0 || ny < 0 || nx >= GRID_W || ny >= GRID_H) return;
+
+  const tile = getTile(nx, ny);
+  if (isWall(tile)) { showToast('🚫'); return; }
+
+  S.px = nx; S.py = ny;
+  S.xp = CA.fold(CA.cascade(S.xp || 1, 1));
+
+  // Collectibles
+  if (COLLECTIBLES.has(tile)) {
+    if (tile === '❤️' || tile === '🍎') {
+      S.hp = Math.min(100, S.hp + 10); showToast('❤️ +10 HP');
+    } else if (tile === '💊' || tile === '🧪') {
+      S.hp = Math.min(100, S.hp + 25); showToast('💊 +25 HP');
+    } else if (tile === '⭐' || tile === '🌟') {
+      S.xp += 25; showToast('⭐ +25 XP');
+    } else {
+      const g = tile==='🏆'?10:tile==='💰'?5:1;
+      S.gems += g; showToast(`💎 +${g}`);
+    }
+    putTile(nx, ny, THEMES[S.level].f[0]);
+  }
+  // Hazards
+  if (HAZARDS.has(tile)) {
+    S.hp = Math.max(0, S.hp - 10);
+    showToast('💥 −10 HP');
+    if (S.hp <= 0) {
+      showModal('☠️ GAME OVER',
+        `Cascade collapse!\n\nGems: ${S.gems}\nXP:   ${S.xp}\nStrand: ${CA.qb4i(CA.fold(S.xp||1))}`,
+        [{l:'🔄 RETRY', fn:()=>{ resetPlayer(); closeModal(); }},
+         {l:'✏️ EDIT',  fn:()=>{ closeModal(); switchMode('build'); }}]);
+    }
+  }
+
+  // Camera: center on player with clamping
+  S.tCamX = clamp(S.px - VIEW/2, 0, GRID_W - VIEW);
+  S.tCamY = clamp(S.py - VIEW/2, 0, GRID_H - VIEW);
+}
+
+function resetPlayer() {
+  S.px=2; S.py=2; S.hp=100; S.xp=0; S.gems=0;
+  S.camX=0; S.camY=0; S.tCamX=0; S.tCamY=0;
+}
+
+// ── D-PAD ──────────────────────────────────────────────────
+function bindDpad(id, dx, dy) {
+  const el = document.getElementById(id);
+  let rep=null, hold=null;
+  const go = () => movePlayer(dx, dy);
+  el.addEventListener('touchstart', e => {
+    e.preventDefault(); go();
+    hold = setTimeout(() => { rep = setInterval(go, 110); }, 280);
+  }, {passive:false});
+  const stop = e => { e.preventDefault(); clearTimeout(hold); clearInterval(rep); };
+  el.addEventListener('touchend',    stop, {passive:false});
+  el.addEventListener('touchcancel', stop, {passive:false});
+  el.addEventListener('touchleave',  stop, {passive:false});
+}
+bindDpad('dU', 0,-1); bindDpad('dD', 0,1);
+bindDpad('dL',-1, 0); bindDpad('dR', 1,0);
+
+document.getElementById('dC').addEventListener('touchstart', e => {
+  e.preventDefault(); resetPlayer(); showToast('🔄 RESET');
+}, {passive:false});
+
+document.getElementById('btnA').addEventListener('touchstart', e => {
+  e.preventDefault();
+  for (const [dx,dy] of [[0,-1],[0,1],[-1,0],[1,0]]) {
+    const t = getTile(S.px+dx, S.py+dy);
+    if (t && ['🧙','📜','💬','❗','❓','🚪'].includes(t)) {
+      showModal('🔍 INSPECT',
+        `Tile: ${t}\nWorld: (${S.px+dx},${S.py+dy})\nAlgebra: ${CA.qb4i(S.xp||1)}`,
+        [{l:'OK', fn:closeModal}]);
+      return;
+    }
+  }
+  showToast('🔍 Nothing');
+}, {passive:false});
+
+document.getElementById('btnB').addEventListener('touchstart', e => {
+  e.preventDefault();
+  showModal('⚙️ STATUS',
+    `❤️ HP:    ${S.hp}/100\n💎 GEMS:  ${S.gems}\n⭐ XP:    ${S.xp}\n📍 POS:   ${S.px},${S.py}\n🗺 WORLD: ${GRID_W}×${GRID_H}\n🔢 STRAND:${CA.qb4i(CA.fold(S.xp||1))}`,
+    [{l:'GO',    fn:closeModal},
+     {l:'EDIT',  fn:()=>{ closeModal(); switchMode('build'); }}]);
+}, {passive:false});
+
+// ── MODE SWITCH ────────────────────────────────────────────
+function switchMode(mode) {
+  S.mode = mode;
+  document.querySelectorAll('.tab').forEach(t =>
+    t.classList.toggle('on', t.dataset.mode === mode)
+  );
+  document.getElementById('buildUI').style.display = mode==='build' ? 'flex' : 'none';
+  document.getElementById('playUI').style.display  = mode==='play'  ? 'flex' : 'none';
+  if (mode === 'play') {
+    resetPlayer();
+    showToast('▶ LVL ' + S.level + ': ' + THEMES[S.level].n);
+  }
+}
+document.querySelectorAll('.tab').forEach(btn =>
+  btn.addEventListener('touchstart', e => {
+    e.preventDefault(); switchMode(btn.dataset.mode);
+  }, {passive:false})
+);
+
+// ── THEME SELECTOR ─────────────────────────────────────────
+function buildThemes() {
+  const el = document.getElementById('themeStrip');
+  el.innerHTML = '';
+  for (let i=1; i<=10; i++) {
+    const btn = document.createElement('button');
+    btn.className   = 'th' + (i===S.level?' on':'');
+    btn.textContent = i;
+    btn.title       = THEMES[i].n;
+    btn.addEventListener('touchstart', ev => {
+      ev.preventDefault();
+      saveGrid(S.level);
+      S.level = i;
+      S.grid  = loadGrid(i);
+      S.tile  = THEMES[i].w[0];
+      S.camX  = 0; S.camY = 0;
+      buildThemes(); buildPalette();
+      showToast(`LVL ${i}: ${THEMES[i].n}`);
+    }, {passive:false});
+    el.appendChild(btn);
+  }
+}
+
+// ── TILE PALETTE ───────────────────────────────────────────
+function buildPalette() {
+  const t  = THEMES[S.level];
+  const el = document.getElementById('palStrip');
+  el.innerHTML = '';
+  // walls + floors in palette
+  const all = [...t.w, ...t.f];
+  all.forEach(em => {
+    const d = document.createElement('div');
+    d.className   = 'pal' + (em===S.tile?' on':'');
+    d.textContent = em;
+    d.addEventListener('touchstart', ev => {
+      ev.preventDefault(); S.tile=em; buildPalette();
+    }, {passive:false});
+    el.appendChild(d);
+  });
+}
+
+// ── TOOL BUTTONS ───────────────────────────────────────────
+document.getElementById('saveBtn').addEventListener('touchstart', e => {
+  e.preventDefault(); saveGrid(S.level); showToast('💾 SAVED');
+}, {passive:false});
+
+document.getElementById('seedBtn').addEventListener('touchstart', e => {
+  e.preventDefault();
+  const seed = (Date.now() % 251) + 2;
+  const t = THEMES[S.level];
+  for (let row=0; row<GRID_H; row++) {
+    for (let col=0; col<GRID_W; col++) {
+      // cascade seed: row & col are operands, folds to parity-stable value
+      const v = CA.fold(CA.cascade(seed, col+1, row+1));
+      S.grid[row][col] = (v%5===0) ? t.w[v%t.w.length] : t.f[v%t.f.length];
+    }
+  }
+  // Clear 3×3 spawn area
+  for (let r=1;r<=3;r++) for (let c=1;c<=3;c++) S.grid[r][c] = t.f[0];
+  showToast('⚡ CASCADE SEEDED');
+}, {passive:false});
+
+document.getElementById('clearBtn').addEventListener('touchstart', e => {
+  e.preventDefault();
+  showModal('🗑️ CLEAR?', `Erase Level ${S.level}?\nCannot be undone.`, [
+    {l:'CLEAR',  fn:()=>{ S.grid=blankGrid(S.level); closeModal(); }},
+    {l:'CANCEL', fn:closeModal, sec:true},
+  ]);
+}, {passive:false});
+
+// ── MODAL ──────────────────────────────────────────────────
+function showModal(title, body, btns=[]) {
+  document.getElementById('mt').textContent = title;
+  document.getElementById('mb').textContent = body;
+  const bc = document.getElementById('mbs');
+  bc.innerHTML = '';
+  btns.forEach(b => {
+    const el = document.createElement('button');
+    el.className   = 'mbtn' + (b.sec?' sec':'');
+    el.textContent = b.l;
+    el.addEventListener('touchstart', ev => { ev.preventDefault(); b.fn&&b.fn(); }, {passive:false});
+    bc.appendChild(el);
+  });
+  document.getElementById('modal').classList.add('show');
+}
+function closeModal() { document.getElementById('modal').classList.remove('show'); }
+document.getElementById('modal').addEventListener('touchstart', e => {
+  if (e.target===document.getElementById('modal')) closeModal();
+}, {passive:false});
+
+// ── TOAST ──────────────────────────────────────────────────
+let toastT = null;
+function showToast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('on');
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove('on'), 1600);
+}
+
+// ── PWA INSTALL ────────────────────────────────────────────
+let installPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); installPrompt = e;
+  document.getElementById('ibanner').classList.add('on');
+});
+document.getElementById('iBtn').addEventListener('touchstart', e => {
+  e.preventDefault();
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  installPrompt.userChoice.then(r => {
+    installPrompt = null;
+    document.getElementById('ibanner').classList.remove('on');
+    if (r.outcome==='accepted') showToast('✅ INSTALLED');
+  });
+}, {passive:false});
+document.getElementById('iX').addEventListener('touchstart', e => {
+  e.preventDefault();
+  document.getElementById('ibanner').classList.remove('on');
+}, {passive:false});
+window.addEventListener('appinstalled', () => {
+  showToast('✅ APP INSTALLED');
+  document.getElementById('ibanner').classList.remove('on');
+});
+
+// ── SERVICE WORKER ─────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js')
+    .then(r => console.log('[SW] scope:', r.scope))
+    .catch(e => console.warn('[SW]', e.message));
+}
+
+// ── INIT ───────────────────────────────────────────────────
+S.grid = loadGrid(S.level);
+S.tile = THEMES[S.level].w[0];
+buildThemes();
+buildPalette();
+switchMode('build');
+requestAnimationFrame(render);
+showToast(`SULTAN-47 • ${GRID_W}×${GRID_H} WORLD • 350px MONITOR`);
+</script>
+</body>
+</html>
